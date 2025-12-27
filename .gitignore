@@ -1,0 +1,14 @@
+# --- NixOS Build Artifacts ---
+# ビルド時に生成されるシンボリックリンク
+result
+result-*
+
+# --- Backups ---
+# 先ほど作成したようなバックアップファイル
+*.bak
+*.bak_*
+*.old
+
+# --- Secrets / Private (Future proofing) ---
+# 将来的に秘密情報を別ファイルにする場合用
+secrets/
