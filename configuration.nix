@@ -159,6 +159,7 @@
     BROWSER = "${pkgs.firefox}/bin/firefox";
   };
   environment.variables.EDITOR = "vim";
+    
 
   # System Packages
   environment.systemPackages = with pkgs; [
@@ -170,7 +171,9 @@
     tree
     gh          # GitHub 
     awscli2     # AWS
-    rclone      # Mount Google Drive
+    rclone      # Mount Google Drive 
+
+    # Modern Tools
     jq          # JSON processor
     ripgrep     # Fast grep
     fzf         # Fuzzy finder
@@ -179,15 +182,15 @@
     bat         # Better cat
     zoxide      # Smarter cd
     btop        # System monitor
-    librewolf       
-    slack
-
+         
     # GUI Apps
     gnomeExtensions.appindicator
     epiphany
     wezterm
     obsidian
-    
+    slack    
+    librewolf
+
     # VSCode (Customized)
     (vscode-with-extensions.override {
       vscodeExtensions = with vscode-extensions; [
