@@ -7,11 +7,27 @@
 
   # 1. パッケージ管理
 
-  # configuration.nix からユーザー固有のものをここに移してもOKです
   home.packages = with pkgs; [
-    # ここにはGUIアプリやCLIツールなどを記述
+    # Language Runtimes
     bun
     nodejs_24
+
+    # Dev Tools
+    awscli2     # AWS CLI
+    gh          # GitHub CLI
+    jq          # JSON processor
+    ripgrep     # Fast grep (rg)
+    lazygit     # Git TUI
+    btop        # System monitor
+
+    # GUI Applications
+    # configuration.nix から移管
+    wezterm
+    obsidian
+    slack
+    librewolf
+    epiphany
+    gnomeExtensions.appindicator
   ];
 
   # PATH
@@ -21,10 +37,10 @@
 
   # 2. 設定ファイルの配置 (Symlink作成)
   
-  # Starship: ~/.config/starship.toml に配置
+  # Starship
   xdg.configFile."starship.toml".source = ./dotfiles/starship.toml;
 
-  # WezTerm: ~/.config/wezterm/wezterm.lua に配置
+  # WezTerm
   xdg.configFile."wezterm/wezterm.lua".source = ./dotfiles/wezterm/wezterm.lua;
 
   # 3. プログラムの有効化
@@ -32,18 +48,59 @@
   #
   programs.bash = {
     enable = true;
-    # 既存の .bashrc に追記したい設定があればここに書けます
+    enableCompletion = true;
+   
+    # Aliases
+    shellAliases = {
+      # eza (ls replacement)
+      ls   = "eza --icons --git";
+      ll   = "eza -hl --icons --git";
+      la   = "eza -hla --icons --git";
+      tree = "eza --tree";
+    };
   };
   
   # Starship の有効化設定もこちらに移管できます
   programs.starship = {
     enable = true;
-    # 既に設定ファイルは上で配置しているので、ここでは enable だけでOK
   }; 
+  
+  programs.zoxide = {
+    enable = true;
+    enableBashIntegration = true;
+    options = [ "--cmd cd" ]; # cdコマンド自体を置き換え
+  };
 
+  programs.eza = {
+    enable = true;
+    enableBashIntegration = true;
+    icons = "auto";
+    git = true;
+  };
+
+  programs.bat = {
+    enable = true;
+    config = {
+      theme = "Dracula";
+    };
+  };
+
+  programs.fzf = {
+    enable = true;
+    enableBashIntegration = true;
+    
+    # 検索コマンドに ripgrep を使用 (高速・.gitignore尊重)
+    defaultCommand = "rg --files --hidden --glob '!.git/*'";
+    defaultOptions = [ "--height 40%" "--layout=reverse" "--border" ];
+    
+    # Ctrl+T (ファイル選択) のプレビューに bat を使用
+    fileWidgetOptions = [
+      "--preview 'bat --color=always --style=numbers --line-range=:500 {}'"
+    ];
+  };
   # Git設定などもここで書けます (今回は省略)
 
   # Home Manager のバージョン (変更しない)
-  home.stateVersion = "24.11"; 
+  home.stateVersion = "26.05"; 
 }
 

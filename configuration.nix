@@ -153,7 +153,7 @@
   # Default Apps & Env
   programs.firefox.enable = true;
   programs.starship.enable = true;
-  
+   
   environment.sessionVariables = {
     DEFAULT_BROWSER = "${pkgs.firefox}/bin/firefox";
     BROWSER = "${pkgs.firefox}/bin/firefox";
@@ -168,28 +168,7 @@
     wget
     git
     curl
-    tree
-    gh          # GitHub 
-    awscli2     # AWS
     rclone      # Mount Google Drive 
-
-    # Modern Tools
-    jq          # JSON processor
-    ripgrep     # Fast grep
-    fzf         # Fuzzy finder
-    lazygit     # Git TUI
-    eza         # Better ls
-    bat         # Better cat
-    zoxide      # Smarter cd
-    btop        # System monitor
-         
-    # GUI Apps
-    gnomeExtensions.appindicator
-    epiphany
-    wezterm
-    obsidian
-    slack    
-    librewolf
 
     # VSCode (Customized)
     (vscode-with-extensions.override {
@@ -230,6 +209,7 @@
     enable = true;
     withGnome = true;
     userName = "okshin";
+    deviceNames = [ "AT Translated Set 2 keyboard" ]; 
     yamlConfig = ''
       modmap:
         - name: Onishi Layout (Base)
