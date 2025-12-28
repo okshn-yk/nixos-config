@@ -168,10 +168,20 @@
     git
     curl
     tree
-    gh
-    awscli2
-    rclone
-    
+    gh          # GitHub 
+    awscli2     # AWS
+    rclone      # Mount Google Drive
+    jq          # JSON processor
+    ripgrep     # Fast grep
+    fzf         # Fuzzy finder
+    lazygit     # Git TUI
+    eza         # Better ls
+    bat         # Better cat
+    zoxide      # Smarter cd
+    btop        # System monitor
+    librewolf       
+    slack
+
     # GUI Apps
     gnomeExtensions.appindicator
     epiphany
