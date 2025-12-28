@@ -151,12 +151,12 @@
   };
 
   # Default Apps & Env
-  programs.firefox.enable = true;
+  # programs.firefox.enable = true;
   programs.starship.enable = true;
    
   environment.sessionVariables = {
-    DEFAULT_BROWSER = "${pkgs.firefox}/bin/firefox";
-    BROWSER = "${pkgs.firefox}/bin/firefox";
+    # DEFAULT_BROWSER = "${pkgs.firefox}/bin/firefox";
+    # BROWSER = "${pkgs.firefox}/bin/firefox";
   };
   environment.variables.EDITOR = "vim";
     

@@ -21,11 +21,9 @@
     btop        # System monitor
 
     # GUI Applications
-    # configuration.nix から移管
     wezterm
     obsidian
     slack
-    librewolf
     epiphany
     gnomeExtensions.appindicator
   ];
@@ -35,7 +33,15 @@
     "$HOME/.bun/bin"
   ];
 
-  # 2. 設定ファイルの配置 (Symlink作成)
+  # 2. 環境変数の設定
+  home.sessionVariables = {
+    EDITOR = "vim";
+    # Home Managerで入れたFirefoxを指定
+    BROWSER = "firefox";
+    DEFAULT_BROWSER = "firefox";
+  };
+  
+  # 3. 設定ファイルの配置 (Symlink作成)
   
   # Starship
   xdg.configFile."starship.toml".source = ./dotfiles/starship.toml;
@@ -43,7 +49,7 @@
   # WezTerm
   xdg.configFile."wezterm/wezterm.lua".source = ./dotfiles/wezterm/wezterm.lua;
 
-  # 3. プログラムの有効化
+  # 4. プログラムの有効化・設定
   
   #
   programs.bash = {
@@ -98,7 +104,37 @@
       "--preview 'bat --color=always --style=numbers --line-range=:500 {}'"
     ];
   };
-  # Git設定などもここで書けます (今回は省略)
+
+  # firefox
+  programs.firefox = {
+    enable = true;
+    
+    # ポリシー設定 (企業向けの管理機能を使ってテレメトリ等を強制オフにする)
+    policies = {
+      DisableTelemetry = true;
+      DisableFirefoxStudies = true;
+      EnableTrackingProtection = {
+        Value = true;
+        Locked = true;
+      };
+      DisablePocket = true;
+      DisableFirefoxAccounts = false; # Syncを使いたい場合は false
+      DisableAccounts = false;
+      DisableAppUpdate = true; # Nixで管理するため
+      
+      # "New Tab" ページの広告などを消す
+      FirefoxHome = {
+        Search = true;
+        Pocket = false;
+        Snippets = false;
+        TopSites = true;
+        Highlights = false;
+        SponsoredPocket = false;
+        SponsoredTopSites = false;
+      };
+    };
+  };
+  # Git
 
   # Home Manager のバージョン (変更しない)
   home.stateVersion = "26.05"; 
