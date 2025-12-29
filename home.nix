@@ -132,9 +132,29 @@
         SponsoredPocket = false;
         SponsoredTopSites = false;
       };
+      Preferences = {
+        "media.hardwaremediakeys.enabled" = false;
+      };
     };
   };
+
   # Git
+  programs.git = {
+    enable = true;
+    
+    settings = {
+      user = {
+        name = "okshin";
+        email = "156062140+okshn-yk@users.noreply.github.com";
+      };
+      credential = {
+        helper = "!gh auth git-credential";
+      };
+      init = {
+        defaultBranch = "main";
+      };
+    };
+  };
 
   # Home Manager のバージョン (変更しない)
   home.stateVersion = "26.05"; 
