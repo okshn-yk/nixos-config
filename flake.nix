@@ -14,6 +14,10 @@
     # xremapの公式Flakeを取り込み
     xremap-flake.url = "github:xremap/nix-flake";
     xremap-flake.inputs.nixpkgs.follows = "nixpkgs";
+
+    # soap-nix
+    sops-nix.url = "github:Mic92/sops-nix";
+    sops-nix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = { self, nixpkgs, home-manager, xremap-flake, sops-nix, ... }@inputs: {
