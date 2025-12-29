@@ -210,21 +210,26 @@
         [connection]
         id=HomeWiFi-Sops
         type=wifi
-        # interface-name=wlp0s20f3  # 必要ならインターフェース名を指定 (ip a で確認)、不要なら行削除
+        autoconnect=true
+        autoconnect-priority=100        
+        permissions=   
 
         [wifi]
         ssid=${config.sops.placeholder.wifi_ssid}
         mode=infrastructure
 
         [wifi-security]
-        key-mgmt=wpa-psk
-        auth-alg=open
+        key-mgmt=sae
         psk=${config.sops.placeholder.wifi_psk}
+
+        # pass save
+        password-flags=0
 
         [ipv4]
         method=auto
 
         [ipv6]
+        addr-gen-mode=default
         method=auto
       '';
       # NetworkManager が読めるように権限設定
