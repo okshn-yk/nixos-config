@@ -169,6 +169,7 @@
     git
     curl
     rclone      # Mount Google Drive 
+    sops        # sops-nix
 
     # VSCode (Customized)
     (vscode-with-extensions.override {
@@ -184,6 +185,61 @@
       ];
     })
   ];
+
+  # sops-nix
+  sops = {
+    defaultSopsFile = ./secrets.yaml;
+    defaultSopsFormat = "yaml";
+
+    # 復号に使う鍵（ホストのSSH秘密鍵）の場所
+    age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+
+    # 1. 秘密情報の定義 ( /run/secrets/wifi_psk 等に展開される)
+    secrets.wifi_ssid = {};
+    secrets.wifi_psk = {};
+
+    # 2. 設定ファイルのテンプレート作成
+    # 復号された値を埋め込んで NetworkManager 用のファイルを生成
+    templates."home-wifi.nmconnection" = {
+      content = ''
+        [connection]
+        id=HomeWiFi-Sops
+        type=wifi
+        # interface-name=wlp0s20f3  # 必要ならインターフェース名を指定 (ip a で確認)、不要なら行削除
+
+        [wifi]
+        ssid=${config.sops.placeholder.wifi_ssid}
+        mode=infrastructure
+
+        [wifi-security]
+        key-mgmt=wpa-psk
+        auth-alg=open
+        psk=${config.sops.placeholder.wifi_psk}
+
+        [ipv4]
+        method=auto
+
+        [ipv6]
+        method=auto
+      '';
+      # NetworkManager が読めるように権限設定
+      mode = "0600";
+    };
+  };
+
+  # 生成された設定ファイルを NetworkManager に認識させる
+  # sopsが出力するファイルは /run/secrets/rendered/ にあるため、
+  # システム起動時に NetworkManager の設定ディレクトリへリンクを貼る
+  systemd.services."NetworkManager-pre" = {
+    script = ''
+      mkdir -p /etc/NetworkManager/system-connections/
+      ln -sf ${config.sops.templates."home-wifi.nmconnection".path} /etc/NetworkManager/system-connections/home-wifi.nmconnection
+      chmod 600 /etc/NetworkManager/system-connections/home-wifi.nmconnection
+    '';
+    # NetworkManager起動前に実行
+    before = [ "NetworkManager.service" ];
+    wantedBy = [ "multi-user.target" ];
+  };
 
   # ==========================================
   # 6. Custom Services

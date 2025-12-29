@@ -16,7 +16,7 @@
     xremap-flake.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, home-manager, xremap-flake, ... }@inputs: {
+  outputs = { self, nixpkgs, home-manager, xremap-flake, sops-nix, ... }@inputs: {
     nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = { inherit inputs; }; # inputsをconfiguration.nixへ渡す
@@ -31,8 +31,11 @@
           home-manager.users.okshin = import ./home.nix; # ここでユーザー設定ファイルを指定
         }
 
-        # xremapのモジュールを読み込み
+        # xremapモジュールを読み込み
         xremap-flake.nixosModules.default
+
+        # sopsモジュールの読み込み
+        sops-nix.nixosModules.sops
       ];
     };
   };
