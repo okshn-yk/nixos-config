@@ -170,6 +170,8 @@
     curl
     rclone      # Mount Google Drive 
     sops        # sops-nix
+    age         # 暗号化 
+    ssh-to-age  # SSH Keyをage用の鍵に変換
 
     # VSCode (Customized)
     (vscode-with-extensions.override {
