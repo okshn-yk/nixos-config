@@ -173,6 +173,9 @@
     age         # 暗号化 
     ssh-to-age  # SSH Keyをage用の鍵に変換
 
+    # Container Tools
+    podman-compose
+
     # VSCode (Customized)
     (vscode-with-extensions.override {
       vscodeExtensions = with vscode-extensions; [
@@ -241,6 +244,17 @@
     # NetworkManager起動前に実行
     before = [ "NetworkManager.service" ];
     wantedBy = [ "multi-user.target" ];
+  };
+
+  # Podman有効化
+  virtualisation.podman = {
+    enable = true;
+
+    # Docker互換モード有効化
+    dockerCompat = true;
+
+    # コンテナ間通信(DNSName)設定
+    defaultNetwork.settings.dns_enabled = true;
   };
 
   # ==========================================
