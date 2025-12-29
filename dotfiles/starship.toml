@@ -7,6 +7,7 @@ $git_branch\
 [](fg:#1a1b26)\
 $fill\
 [](fg:#1a1b26)\
+$aws\
 $terraform\
 [](fg:#212736 bg:#1d2230)\
 $time\
@@ -50,6 +51,12 @@ style = 'black'
 [character]
 success_symbol = '[❯](bold #9ece6a)'
 error_symbol = '[❯](bold red)'
+
+[aws]
+disabled = false
+format = '[$symbol($profile)]($style)'
+style = 'bold #ff9900 bg:#1a1b26'
+symbol = ' '
 
 [terraform]
 symbol = '💠'

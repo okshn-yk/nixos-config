@@ -63,6 +63,10 @@
       ll   = "eza -hl --icons --git";
       la   = "eza -hla --icons --git";
       tree = "eza --tree";
+
+      # aws sso for starship
+      adev = "export AWS_PROFILE=dev && aws sso login";
+      aadm = "export AWS_PROFILE=admin && aws sso login";
     };
   };
   
