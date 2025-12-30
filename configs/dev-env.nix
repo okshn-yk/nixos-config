@@ -20,18 +20,18 @@
     podman-compose
 
     # VSCode (Customized)
-    (vscode-with-extensions.override {
-      vscodeExtensions = with vscode-extensions; [
-        bbenoist.nix                # Nix
-        ms-python.python            # Python
-        charliermarsh.ruff          # Ruff
-        hashicorp.terraform         # Terraform
-        ms-azuretools.vscode-docker # Docker
-        eamodio.gitlens             # GitLens
-        esbenp.prettier-vscode      # Prettier
-        dracula-theme.theme-dracula # Theme
-      ];
-    })
+    #(vscode-with-extensions.override {
+    #  vscodeExtensions = with vscode-extensions; [
+    #    bbenoist.nix                # Nix
+    #    ms-python.python            # Python
+    #    charliermarsh.ruff          # Ruff
+    #    hashicorp.terraform         # Terraform
+    #    ms-azuretools.vscode-docker # Docker
+    #    eamodio.gitlens             # GitLens
+    #    esbenp.prettier-vscode      # Prettier
+    #    dracula-theme.theme-dracula # Theme
+    #  ];
+   # })
   ];
 
   # Nix-ld (VSCode Server compatibility)

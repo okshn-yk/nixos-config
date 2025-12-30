@@ -70,7 +70,7 @@
     };
   };
   
-  # Starship の有効化設定もこちらに移管できます
+  # Starship の有効化設定
   programs.starship = {
     enable = true;
   }; 
@@ -159,6 +159,47 @@
       };
     };
   };
+
+  # VSCode
+  programs.vscode = {
+    enable = true;
+    
+    # 拡張機能の定義 (pkgs.vscode-extensions から取得)
+    extensions = with pkgs.vscode-extensions; [
+      bbenoist.nix                # Nix
+      ms-python.python            # Python
+      charliermarsh.ruff          # Ruff
+      hashicorp.terraform         # Terraform
+      ms-azuretools.vscode-docker # Docker
+      eamodio.gitlens             # GitLens
+      esbenp.prettier-vscode      # Prettier
+      dracula-theme.theme-dracula # Theme
+    ];
+
+    # settings.json を Nix で管理
+    userSettings = {
+      "workbench.colorTheme" = "Dracula";
+      "editor.fontSize" = 14;
+      "editor.fontFamily" = "'HackGen Console', monospace";
+      "editor.formatOnSave" = true;
+      "files.autoSave" = "onFocusChange";
+      
+      # Nix 設定
+      "nix.enableLanguageServer" = true;
+      "nix.serverPath" = "nil";
+      "nix.serverSettings" = {
+        "nil" = {
+          "formatting" = { "command" = [ "nixfmt" ]; };
+        };
+      };
+      
+      # Python / Ruff
+      "[python]" = {
+        "editor.defaultFormatter" = "charliermarsh.ruff";
+      };
+    };
+  };
+
 
   # Home Manager のバージョン (変更しない)
   home.stateVersion = "26.05"; 
