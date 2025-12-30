@@ -57,6 +57,7 @@ disabled = false
 format = '[$symbol($profile)]($style)'
 style = 'bold #ff9900 bg:#1a1b26'
 symbol = ' '
+expiration_symbol = '🔒'
 
 [terraform]
 symbol = '💠'
