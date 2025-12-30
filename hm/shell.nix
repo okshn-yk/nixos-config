@@ -15,6 +15,9 @@
       adev = "export AWS_PROFILE=dev && aws sso login";
       aadm = "export AWS_PROFILE=admin && aws sso login";
     };
+    initExtra = ''
+      eval "$(starship init bash)"
+    '';   
   };
 
   # CLI Tools (Starship, Zoxide, etc.)
