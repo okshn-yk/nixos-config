@@ -3,9 +3,10 @@
 {
   # Install Packages
   home.packages = with pkgs; [
-    # Runtimes
+    # Language
     bun
     nodejs_24
+    uv
     
     # Dev Tools
     awscli2

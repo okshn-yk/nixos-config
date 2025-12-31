@@ -16,7 +16,26 @@
       aadm = "export AWS_PROFILE=admin && aws sso login";
     };
     initExtra = ''
+      # Starship初期化
       eval "$(starship init bash)"
+
+      # ghq + fzf連携
+      # 1. 処理を行う関数を定義
+      function zrun_ghq_fzf() {
+        local src=$(ghq list -p | fzf --preview "ls -la {}")
+        if [ -n "$src" ]; then
+          cd "$src"
+          # 移動後に画面をクリアして、視線を左上に戻す
+          clear 
+        fi
+      }
+
+      # 2. キーバインド設定 
+      # bind -x ではなく、標準の bind を使います。
+      # \C-u  : 現在入力中の文字を消す（安全のため）
+      # zrun_ : 関数名をタイプする
+      # \n    : Enterキーを押す
+      bind '"\C-g":" \C-u zrun_ghq_fzf\n"'
     '';   
   };
 
