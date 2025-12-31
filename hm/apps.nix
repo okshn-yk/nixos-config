@@ -82,6 +82,35 @@
     }
   '';
 
+  # Thunderbird
+  programs.thunderbird = {
+    enable = true;
+    
+    profiles = {
+      "default" = {
+        isDefault = true;
+        
+        settings = {
+          # 起動時にスタートページを表示しない
+          "mailnews.start_page.enabled" = false;
+          
+          # トラッキング防止：リモートコンテンツをブロック
+          "mailnews.message_display.disable_remote_image" = true;
+          
+          # スペルチェックを無効化（日本語入力時の赤線を消す）
+          "layout.spellcheckDefault" = 0;
+          
+          # 既読になるまでの遅延（秒）
+          "mailnews.mark_message_read.delay" = true;
+          "mailnews.mark_message_read.delay.interval" = 1;
+          
+          # 日付フォーマットを ISO 8601 (YYYY-MM-DD) に近づける
+          "mail.ui.display.dateformat.default" = 2; 
+        };
+      };
+    };
+  };
+
   # Firefox Config
   programs.firefox = {
     enable = true;
