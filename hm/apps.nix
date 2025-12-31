@@ -36,7 +36,7 @@
       
       # フォント
       font-family = "HackGen Console";
-      font-size = 15;
+      font-size = 14;
       font-feature = ["calt" "liga"];
       
       # --- ウィンドウ (没入感の向上) ---
@@ -65,6 +65,22 @@
       show_startup_tips = false;
     };
   };
+
+  xdg.configFile."zellij/config.kdl".text = ''
+    keybinds {
+        locked {
+            unbind "Ctrl g"
+            bind "Alt g" { SwitchToMode "Normal"; }
+        }
+        shared_except "locked" {
+            unbind "Ctrl g"
+            bind "Alt g" { SwitchToMode "Locked"; }
+            // Alt+oでセッションメニュー 
+            unbind "Ctrl o"
+            bind "Alt o" { SwitchToMode "Session"; }
+        }
+    }
+  '';
 
   # Firefox Config
   programs.firefox = {

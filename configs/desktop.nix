@@ -68,6 +68,7 @@
       noto-fonts-color-emoji
       nerd-fonts.fira-code
       hackgen-font
+      hackgen-nf-font
     ];
     fontconfig = {
       defaultFonts = {

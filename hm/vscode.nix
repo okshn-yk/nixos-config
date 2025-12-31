@@ -18,6 +18,8 @@
         "workbench.colorTheme" = "Dracula Theme";
         "editor.fontSize" = 14;
         "editor.fontFamily" = "'HackGen Console', monospace";
+        "terminal.integrated.fontFamily" = "'HackGen Console NF', 'HackGen Console', monospace";
+        "terminal.integrated.fontSize" = 14;
         "editor.formatOnSave" = true;
         "files.autoSave" = "onFocusChange";
         "nix.enableLanguageServer" = true;
