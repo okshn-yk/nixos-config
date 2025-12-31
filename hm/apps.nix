@@ -85,6 +85,20 @@
   # Firefox Config
   programs.firefox = {
     enable = true;
+    # 日本語スペルチェック無効
+    profiles.default = {
+      id = 0;
+      name = "default";
+      isDefault = true;
+
+      settings = {
+        # ▼ スペルチェックを完全に無効化
+        # 0: 無効
+        # 1: 複数行の入力ボックスのみ有効 (デフォルト)
+        # 2: すべての入力ボックスで有効
+        "layout.spellcheckDefault" = 0;
+      };
+    };
     # ポリシー設定 (企業向けの管理機能を使ってテレメトリ等を強制オフにする)
     policies = {
       DisableTelemetry = true;
