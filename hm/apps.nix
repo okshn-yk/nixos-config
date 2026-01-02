@@ -8,6 +8,10 @@
     nodejs_24
     uv
     
+    # Build Tools
+    gcc
+    gnumake
+
     # Dev Tools
     awscli2
     jq
@@ -24,6 +28,34 @@
     epiphany
     gnomeExtensions.appindicator
   ];
+
+  #CopyQ 
+  services.copyq = {
+    enable = true;
+    # Systemdサービスとして管理し、Nixリビルド時に自動再起動させる
+    systemdTarget = "graphical-session.target";
+  };
+  # CopyQとのショートカット競合回避
+  dconf.settings = {
+    "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0" = {
+      name = "CopyQ Toggle";
+      # pkgs.copyq を埋め込むことでパス問題を回避
+      command = "${pkgs.copyq}/bin/copyq toggle";
+      binding = "<Super>v";
+    };
+
+    # 2. 定義したショートカットをシステムに「登録」
+    # ここにリストとしてパスを列挙します
+    "org/gnome/settings-daemon/plugins/media-keys" = {
+      custom-keybindings = [
+        "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/"
+      ];
+    };
+    "org/gnome/shell/keybindings" = {
+      # 通知トレイを Super + N に変更
+      toggle-message-tray = ["<Super>t"];
+    };
+  };
 
   # ghossty
   programs.ghostty = {
@@ -53,6 +85,9 @@
       auto-update = "off";
       # シェル統合機能の有効化
       shell-integration = "detect";
+
+      # Claude Code改行設定（shift + enter）
+      "keybind" = "shift+enter=text:\\x1b\\x0d";
     };
   };
 
@@ -82,6 +117,14 @@
     }
   '';
 
+  # 変換ウィンドウ設定
+  xdg.configFile."fcitx5/conf/classicui.conf".text = ''
+    Vertical Candidate List=True
+    PerScreenDPI=True
+    Font="Sans 12"
+    Theme=catppuccin-macchiato-blue
+  '';
+
   # Firefox Config
   programs.firefox = {
     enable = true;
@@ -97,6 +140,8 @@
         # 1: 複数行の入力ボックスのみ有効 (デフォルト)
         # 2: すべての入力ボックスで有効
         "layout.spellcheckDefault" = 0;
+        "network.dns.disableIPv6" = true;
+        "privacy.resistFingerprinting" = false;
       };
     };
     # ポリシー設定 (企業向けの管理機能を使ってテレメトリ等を強制オフにする)
