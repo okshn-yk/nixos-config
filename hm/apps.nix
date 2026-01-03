@@ -7,7 +7,7 @@
     bun
     nodejs_24
     uv
-    
+
     # Build Tools
     gcc
     gnumake
@@ -17,9 +17,6 @@
     jq
     ripgrep
     btop
-
-    # Formatter
-    nixfmt-rfc-style
 
     # GUI Apps
     # wezterm
@@ -129,6 +126,7 @@
   programs.firefox = {
     enable = true;
     # 日本語スペルチェック無効
+    nativeMessagingHosts = [ pkgs._1password-gui ];
     profiles.default = {
       id = 0;
       name = "default";
@@ -142,6 +140,15 @@
         "layout.spellcheckDefault" = 0;
         "network.dns.disableIPv6" = true;
         "privacy.resistFingerprinting" = false;
+
+        # ▼【追加】Firefox標準の翻訳機能を完全に無効化（DeepLに譲るため）
+        "browser.translations.enable" = false;
+        "browser.translations.panelShown" = false;
+        "browser.translations.automaticallyPopup" = false;
+
+        # ▼【追加】非同期クリップボード操作の許可（拡張機能の動作安定化）
+        "dom.events.asyncClipboard.readText" = true;
+        "dom.events.testing.asyncClipboard" = true;
       };
     };
     # ポリシー設定 (企業向けの管理機能を使ってテレメトリ等を強制オフにする)
