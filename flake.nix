@@ -11,6 +11,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+   # Claude Code設定
+    claude-code-nix = {
+      url = "github:sadjow/claude-code-nix";
+      # 依存関係（nixpkgs）をシステムと合わせる
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # xremapの公式Flakeを取り込み
     xremap-flake.url = "github:xremap/nix-flake";
     xremap-flake.inputs.nixpkgs.follows = "nixpkgs";
@@ -32,6 +39,7 @@
         {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
+          home-manager.extraSpecialArgs = { inherit inputs; };
           home-manager.users.okshin = import ./home.nix; # ここでユーザー設定ファイルを指定
         }
 

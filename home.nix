@@ -7,6 +7,7 @@
     ./hm/vscode.nix
     ./hm/git.nix
     ./hm/apps.nix
+    ./hm/claude.nix
   ];
 
   # 基本情報
