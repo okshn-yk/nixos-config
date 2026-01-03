@@ -29,7 +29,7 @@ nix-search <クエリ>
 
 ### Flake構成
 
-- `flake.nix` - エントリポイント。入力定義（nixpkgs unstable, home-manager, xremap, sops-nix, claude-code-nix）
+- `flake.nix` - エントリポイント。入力定義（nixpkgs unstable, home-manager, xremap, sops-nix, claude-code-nix, rust-overlay）
 - `configuration.nix` - システムレベル設定。`configs/`からモジュールをインポート
 - `home.nix` - Home Managerエントリポイント。`hm/`からユーザー設定をインポート
 
@@ -54,6 +54,7 @@ nix-search <クエリ>
 | `vscode.nix` | VS Code設定 |
 | `claude.nix` | Claude Code（claude-code-nixフレーク経由）、Nixツール群（nixd, nix-search-cli, nix-tree, nixfmt） |
 | `autostart.nix` | 自動起動アプリ |
+| `rust.nix` | Rust開発環境（rust-bin stable, cargo-edit/watch/audit/expand, bacon） |
 
 ### シークレット管理
 
@@ -66,8 +67,9 @@ sops-nixとage暗号化を使用。`secrets.yaml`に保存し、SSHホスト鍵�
 - `nix-tree` - 依存関係ツリー表示
 - `nixfmt-rfc-style` - Nixコードフォーマッター
 
-## シェルエイリアス
+## シェルエイリアス・キーバインド
 
 - `update-claude` - claude-code-nixを更新してリビルド
 - `adev` / `aadm` - AWS SSOログインショートカット
 - `ls`, `ll`, `la`, `tree` - eza版（アイコン/git連携付き）
+- `Ctrl+g` - ghq+fzfでリポジトリ選択・移動
