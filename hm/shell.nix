@@ -15,7 +15,7 @@
       adev = "export AWS_PROFILE=dev && aws sso login";
       aadm = "export AWS_PROFILE=admin && aws sso login";
       # update-claudcode
-      update-claude = "cd ~/nixos-config && nix flake update claude-code-nix && git commit -am 'chore: update claude-code' && sudo nixos-rebuild switch --flake . || echo 'Update failed'";
+      update-claude = "cd ~/nixos-config && nix flake update claude-code-nix && if ! git diff --quiet flake.lock; then git commit -am 'chore: update claude-code' && sudo nixos-rebuild switch --flake .; else echo '✅ Claude Code is already up to date.'; fi";
     };
     initExtra = ''
       # Starship初期化
