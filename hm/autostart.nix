@@ -1,6 +1,24 @@
 { pkgs, ... }:
 
 {
+  # --- 0. 依存パッケージ (拡張機能) のインストール ---
+  home.packages = with pkgs; [
+    gnomeExtensions.auto-move-windows
+  ];
+
+  # --- 1. ウィンドウ配置ルール (Workspace Assignment) ---
+  # アプリをどのワークスペースで開くか指定します (1始まり)
+  dconf.settings = {
+    "org/gnome/shell/extensions/auto-move-windows" = {
+      application-list = [
+        "firefox.desktop:1"  # WS 1: ブラウザ
+        "ghostty.desktop:1"  # WS 1: ターミナル
+        "code.desktop:2"     # WS 2: コード
+        "slack.desktop:3"    # WS 3: チャット
+      ];
+    };
+  };
+
   # ===========================================================================
   # XDG Autostart Configuration
   # ログイン時に自動起動するアプリケーションを定義します。

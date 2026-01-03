@@ -18,6 +18,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    #Rust Overlay
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # xremapの公式Flakeを取り込み
     xremap-flake.url = "github:xremap/nix-flake";
     xremap-flake.inputs.nixpkgs.follows = "nixpkgs";
@@ -27,12 +33,17 @@
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, home-manager, xremap-flake, sops-nix, ... }@inputs: {
+  outputs = { self, nixpkgs, home-manager, xremap-flake, sops-nix, rust-overlay, ... }@inputs: {
     nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = { inherit inputs; }; # inputsをconfiguration.nixへ渡す
       modules = [
         ./configuration.nix
+
+        # システム全体でrust-binを使用可能に
+        ({ pkgs, ... }: {
+          nixpkgs.overlays = [ rust-overlay.overlays.default ];
+        })
 
         # Home Manager モジュールの読み込み
         home-manager.nixosModules.home-manager

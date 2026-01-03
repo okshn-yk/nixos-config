@@ -8,7 +8,8 @@
     ./hm/git.nix
     ./hm/apps.nix
     ./hm/claude.nix
-    ./autostart.nix
+    ./hm/autostart.nix
+    ./hm/rust.nix
   ];
 
   # 基本情報
