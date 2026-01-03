@@ -7,7 +7,8 @@
 
   home.packages = with pkgs; [
     # 1. Claude Code
-    claude-code
+    # claude-code
+    inputs.claude-code-nix.packages.${pkgs.system}.default
 
     # 2. Nix Knowledge Tools
     nixd              # LSP: 構文チェック、定義ジャンプ、ドキュメント参照用
