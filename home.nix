@@ -12,6 +12,7 @@
     ./hm/claude.nix
     ./hm/autostart.nix
     ./hm/rust.nix
+    ./hm/go.nix
   ];
 
   # 基本情報
