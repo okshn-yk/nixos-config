@@ -9,6 +9,8 @@
     ./configs/laptop.nix
     ./configs/wifi.nix
     ./configs/keymap.nix
+    ./configs/performance.nix
+    ./configs/security.nix
   ];
 
   # ==========================================
@@ -19,7 +21,12 @@
   boot.loader.efi.canTouchEfiVariables = true;
 
   # Nix Settings
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings = {
+    experimental-features = [ "nix-command" "flakes" ];
+    # nix-community バイナリキャッシュ（ビルド時間短縮）
+    substituters = [ "https://nix-community.cachix.org" ];
+    trusted-public-keys = [ "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=" ];
+  };
   nix.gc = {
     automatic = true;
     dates = "weekly";
@@ -85,4 +92,21 @@
   
   # Rclone package itself
   environment.systemPackages = [ pkgs.rclone ];
+
+  # --- Locate (ファイル検索高速化) ---
+  # 毎日DBを更新し、locateコマンドで瞬時検索
+  services.locate = {
+    enable = true;
+    package = pkgs.plocate;
+    interval = "daily";
+    prunePaths = [
+      "/tmp"
+      "/var/tmp"
+      "/var/cache"
+      "/var/lock"
+      "/var/spool"
+      "/nix/store"
+      "/nix/var/log"
+    ];
+  };
 }

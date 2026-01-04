@@ -1,6 +1,11 @@
 { config, pkgs, ... }:
 
 {
+  # CLI Tools Package
+  home.packages = with pkgs; [
+    fd  # find の高速代替
+  ];
+
   # Bash & Aliases
   programs.bash = {
     enable = true;
@@ -11,6 +16,8 @@
       ll   = "eza -hl --icons --git";
       la   = "eza -hla --icons --git";
       tree = "eza --tree";
+      # fd (隠しファイル込み検索)
+      fdh  = "fd --hidden --no-ignore";
       # aws profile
       adev = "export AWS_PROFILE=dev && aws sso login";
       aadm = "export AWS_PROFILE=admin && aws sso login";
