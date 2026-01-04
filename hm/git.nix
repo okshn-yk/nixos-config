@@ -20,6 +20,13 @@
       credential.helper = "!gh auth git-credential";
       init.defaultBranch = "main";
 
+      # 大きなプッシュ用のHTTP設定
+      http = {
+        postBuffer = 524288000;  # 500MB
+        lowSpeedLimit = 0;
+        lowSpeedTime = 999999;
+      };
+
       # ghqの設定
       ghq = {
         root = "~/src";
