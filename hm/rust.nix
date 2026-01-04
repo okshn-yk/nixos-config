@@ -24,7 +24,6 @@
     # --- 3. Build Dependencies  ---
     pkg-config   # C言語ライブラリを探すツール
     openssl      # Web系クレート(reqwest, axum等)で必須
-    gcc          # リンカー (cc linker error 防止)
   ];
 
   # ===========================================================================

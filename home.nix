@@ -7,6 +7,8 @@
     ./hm/vscode.nix
     ./hm/git.nix
     ./hm/apps.nix
+    ./hm/terminal.nix
+    ./hm/browser.nix
     ./hm/claude.nix
     ./hm/autostart.nix
     ./hm/rust.nix
@@ -30,7 +32,7 @@
 
   # 設定ファイルのリンク (Starship等は各モジュールに移してもOKですが、ここでもOK)
   xdg.configFile."starship.toml".source = ./dotfiles/starship.toml;
-  xdg.configFile."wezterm/wezterm.lua".source = ./dotfiles/wezterm/wezterm.lua;
+  # xdg.configFile."wezterm/wezterm.lua".source = ./dotfiles/wezterm/wezterm.lua;
 
-  home.stateVersion = "26.05";
+  home.stateVersion = "24.11";
 }

@@ -48,7 +48,9 @@ nix-search <クエリ>
 
 | ファイル | 内容 |
 |----------|------|
-| `apps.nix` | GUIアプリ（Ghostty, Firefox, Zellij）、CopyQ、dconf設定 |
+| `apps.nix` | パッケージ（言語、ビルドツール、GUIアプリ）、CopyQ、dconf、Fcitx5 |
+| `terminal.nix` | Ghostty、Zellij設定 |
+| `browser.nix` | Firefox設定（プロファイル、ポリシー） |
 | `shell.nix` | Bash設定、エイリアス、Starship、zoxide、eza、fzf、bat |
 | `git.nix` | Git設定、gh/ghq/lazygit、ghによる認証ヘルパー |
 | `vscode.nix` | VS Code設定 |

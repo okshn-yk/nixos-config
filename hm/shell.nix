@@ -18,9 +18,6 @@
       update-claude = "cd ~/nixos-config && nix flake update claude-code-nix && if ! git diff --quiet flake.lock; then git commit -am 'chore: update claude-code' && sudo nixos-rebuild switch --flake .; else echo '✅ Claude Code is already up to date.'; fi";
     };
     initExtra = ''
-      # Starship初期化
-      eval "$(starship init bash)"
-
       # ghq + fzf連携
       # 1. 処理を行う関数を定義
       function zrun_ghq_fzf() {
@@ -42,7 +39,10 @@
   };
 
   # CLI Tools (Starship, Zoxide, etc.)
-  programs.starship.enable = true;
+  programs.starship = {
+    enable = true;
+    enableBashIntegration = true;
+  };
   
   programs.zoxide = {
     enable = true;

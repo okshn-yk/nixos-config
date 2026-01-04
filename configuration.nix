@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   imports = [
@@ -26,8 +26,18 @@
     options = "--delete-older-than 7d";
   };
   
-  # 非フリーパッケージ許可
-  nixpkgs.config.allowUnfree = true;
+  # 非フリーパッケージ許可（ホワイトリスト方式）
+  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+    "vscode"
+    "vscode-extension-ms-vscode-remote-remote-ssh"
+    "vscode-extension-fill-labs-dependi"
+    "slack"
+    "obsidian"
+    "1password"
+    "1password-cli"
+    "1password-gui"
+    "terraform"
+  ];
 
   # State Version
   system.stateVersion = "25.11";
@@ -46,8 +56,6 @@
     packages = with pkgs; [];
   };
 
-  # Global Apps
-  programs.starship.enable = true;
 
   # Sops General Settings (Keys)
   sops = {

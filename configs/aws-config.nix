@@ -2,7 +2,7 @@
 
 {
   # AWS Configuration
-  # Secrets Difine
+  # Secrets Define
   sops.secrets."aws/sso_start_url" = {};
   sops.secrets."aws/account_id/admin" = {};
   sops.secrets."aws/account_id/dev" = {};

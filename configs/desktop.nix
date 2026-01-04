@@ -65,7 +65,6 @@
     packages = with pkgs; [
       noto-fonts-cjk-serif
       noto-fonts-cjk-sans
-      noto-fonts-cjk-sans
       noto-fonts-color-emoji
       nerd-fonts.fira-code
       hackgen-font
