@@ -14,10 +14,13 @@
         esbenp.prettier-vscode
         dracula-theme.theme-dracula
 
-        # --- Rust Additions ---
+        # --- Rust ---
         rust-lang.rust-analyzer   # 言語サーバークライアント
         tamasfe.even-better-toml  # TOMLファイルのサポート
         fill-labs.dependi         # 依存クレートのバージョン管理
+
+        # --- Go ---
+        golang.go                 # Go言語サポート (gopls使用)
 
         vscode-icons-team.vscode-icons
       ];
@@ -50,6 +53,14 @@
         # Nixで入れた rust-analyzer バイナリを強制的に使わせる設定
         "rust-analyzer.server.path" = "rust-analyzer";
         "rust-analyzer.cargo.buildScripts.enable" = true;
+
+        # Nixで入れた gopls を使う設定
+        "go.alternateTools" = {
+          "gopls" = "gopls";
+        };
+        "[go]" = {
+          "editor.defaultFormatter" = "golang.go";
+        };
       };
     };
   };
