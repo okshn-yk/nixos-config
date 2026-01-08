@@ -22,6 +22,13 @@
     ripgrep
     btop
 
+    # Security Scanning
+    checkov  # IaC セキュリティスキャン（Terraform, Dockerfile等）
+    trivy    # コンテナ・ファイルシステム脆弱性スキャン
+
+    # IaC Tools
+    tenv  # Terraform/Terragrunt/OpenTofu バージョンマネージャー
+
     # GUI Apps
     # wezterm
     obsidian

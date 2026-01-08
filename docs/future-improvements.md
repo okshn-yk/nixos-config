@@ -4,20 +4,7 @@
 
 ---
 
-## 開発ツール (`hm/dev-tools.nix`)
-
-### direnv + nix-direnv
-
-**課題**: プロジェクトごとに`nix develop`を手動実行する必要がある
-**解決**: ディレクトリ移動時に自動で開発環境をロード。`.envrc`に`use flake`と書くだけ
-
-```nix
-programs.direnv = {
-  enable = true;
-  enableBashIntegration = true;
-  nix-direnv.enable = true;  # キャッシュでロード高速化
-};
-```
+## 開発ツール
 
 ### delta
 

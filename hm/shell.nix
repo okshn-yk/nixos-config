@@ -3,7 +3,8 @@
 {
   # CLI Tools Package
   home.packages = with pkgs; [
-    fd  # find の高速代替
+    fd     # find の高速代替
+    blesh  # ble.sh - Bash Line Editor（オートサジェスト・構文ハイライト）
   ];
 
   # Bash & Aliases
@@ -25,23 +26,24 @@
       update-claude = "cd ~/nixos-config && nix flake update claude-code-nix && if ! git diff --quiet flake.lock; then git commit -am 'chore: update claude-code' && sudo nixos-rebuild switch --flake .; else echo '✅ Claude Code is already up to date.'; fi";
     };
     initExtra = ''
+      # ble.sh 初期化（最初に読み込む）
+      [[ $- == *i* ]] && source "${pkgs.blesh}/share/blesh/ble.sh" --noattach
+
       # ghq + fzf連携
-      # 1. 処理を行う関数を定義
       function zrun_ghq_fzf() {
         local src=$(ghq list -p | fzf --preview "ls -la {}")
         if [ -n "$src" ]; then
           cd "$src"
-          # 移動後に画面をクリアして、視線を左上に戻す
-          clear 
+          clear
         fi
       }
-
-      # 2. キーバインド設定 
-      # bind -x ではなく、標準の bind を使います。
-      # \C-u  : 現在入力中の文字を消す（安全のため）
-      # zrun_ : 関数名をタイプする
-      # \n    : Enterキーを押す
       bind '"\C-g":" \C-u zrun_ghq_fzf\n"'
+
+      # ble.sh fzf キーバインド統合（Ctrl+r, Ctrl+t, Alt+c）
+      [[ ''${BLE_VERSION-} ]] && ble-import -d contrib/fzf-key-bindings
+
+      # ble.sh アタッチ（最後に実行）
+      [[ ''${BLE_VERSION-} ]] && ble-attach
     '';   
   };
 
