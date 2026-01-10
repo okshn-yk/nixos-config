@@ -23,10 +23,10 @@
         "network.dns.disableIPv6" = true;
         "privacy.resistFingerprinting" = false;
 
-        # ▼ Firefox標準の翻訳機能を完全に無効化（DeepLに譲るため）
-        "browser.translations.enable" = false;
-        "browser.translations.panelShown" = false;
-        "browser.translations.automaticallyPopup" = false;
+        # ▼ Firefox標準の翻訳機能を有効化
+        "browser.translations.enable" = true;
+        "browser.translations.panelShown" = true;
+        "browser.translations.automaticallyPopup" = true;
 
         # ▼ 非同期クリップボード操作の許可（拡張機能の動作安定化）
         "dom.events.asyncClipboard.readText" = true;

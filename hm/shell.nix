@@ -40,7 +40,7 @@
       bind '"\C-g":" \C-u zrun_ghq_fzf\n"'
 
       # ble.sh fzf キーバインド統合（Ctrl+r, Ctrl+t, Alt+c）
-      [[ ''${BLE_VERSION-} ]] && ble-import -d contrib/fzf-key-bindings
+      [[ ''${BLE_VERSION-} ]] && ble-import contrib/fzf-key-bindings
 
       # ble.sh アタッチ（最後に実行）
       [[ ''${BLE_VERSION-} ]] && ble-attach
@@ -73,7 +73,7 @@
 
   programs.fzf = {
     enable = true;
-    enableBashIntegration = true;
+    enableBashIntegration = false;  # ble.sh の fzf 統合を使用するため無効化
     defaultCommand = "rg --files --hidden --glob '!.git/*'";
     defaultOptions = [ "--height 40%" "--layout=reverse" "--border" ];
   };

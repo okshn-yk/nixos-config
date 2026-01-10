@@ -22,6 +22,9 @@
         # --- Go ---
         golang.go                 # Go言語サポート (gopls使用)
 
+        # --- Mermaid ---
+        bierner.markdown-mermaid  # Markdownプレビューでmermaid図表示
+
         vscode-icons-team.vscode-icons
       ];
       userSettings = {
