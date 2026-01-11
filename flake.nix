@@ -2,7 +2,7 @@
   description = "My NixOS Configuration with xremap";
 
   inputs = {
-    # NixOSのパッケージリポジトリ (Unstable版を使うかStable版を使うか指定できます。今回はStable 24.11ベースで)
+    # NixOSのパッケージリポジトリ (Unstable版を使用)
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
     # Home Manager設定
