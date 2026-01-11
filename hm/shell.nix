@@ -42,6 +42,9 @@
       # ble.sh fzf キーバインド統合（Ctrl+r, Ctrl+t, Alt+c）
       [[ ''${BLE_VERSION-} ]] && ble-import contrib/fzf-key-bindings
 
+      # zoxide 初期化（ble-attach の直前に配置）
+      eval "$(zoxide init bash --cmd cd)"
+
       # ble.sh アタッチ（最後に実行）
       [[ ''${BLE_VERSION-} ]] && ble-attach
     '';   
@@ -55,7 +58,7 @@
   
   programs.zoxide = {
     enable = true;
-    enableBashIntegration = true;
+    enableBashIntegration = false;  # 手動で初期化するため無効化（ble.sh との順序問題回避）
     options = [ "--cmd cd" ];
   };
 

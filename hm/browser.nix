@@ -31,6 +31,10 @@
         # ▼ 非同期クリップボード操作の許可（拡張機能の動作安定化）
         "dom.events.asyncClipboard.readText" = true;
         "dom.events.testing.asyncClipboard" = true;
+
+        # ▼ 新しいタブページのスポンサー広告を無効化
+        "browser.newtabpage.activity-stream.showSponsoredTopSites" = false;
+        "browser.newtabpage.activity-stream.showSponsored" = false;
       };
     };
     # ポリシー設定 (企業向けの管理機能を使ってテレメトリ等を強制オフにする)

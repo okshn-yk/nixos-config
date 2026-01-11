@@ -35,21 +35,33 @@
     slack
     epiphany
     gnomeExtensions.appindicator
+
+    # Clipboard Manager
+    gpaste  # GNOMEネイティブのクリップボードマネージャー
   ];
 
-  # CopyQ
-  services.copyq = {
-    enable = true;
-    # Systemdサービスとして管理し、Nixリビルド時に自動再起動させる
-    systemdTarget = "graphical-session.target";
+  # GPasteデーモン自動起動
+  systemd.user.services.gpaste = {
+    Unit = {
+      Description = "GPaste clipboard manager daemon";
+      After = [ "graphical-session.target" ];
+      PartOf = [ "graphical-session.target" ];
+    };
+    Service = {
+      ExecStart = "${pkgs.gpaste}/libexec/gpaste/gpaste-daemon";
+      Restart = "on-failure";
+    };
+    Install = {
+      WantedBy = [ "graphical-session.target" ];
+    };
   };
 
   # GNOME dconf設定
   dconf.settings = {
-    # CopyQショートカット
+    # GPasteショートカット
     "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0" = {
-      name = "CopyQ Toggle";
-      command = "${pkgs.copyq}/bin/copyq toggle";
+      name = "GPaste Toggle";
+      command = "${pkgs.gpaste}/libexec/gpaste/gpaste-ui";
       binding = "<Super>v";
     };
 
