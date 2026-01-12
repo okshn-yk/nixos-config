@@ -58,6 +58,11 @@
 
   # GNOME dconf設定
   dconf.settings = {
+    # ロック画面で通知を非表示
+    "org/gnome/desktop/notifications" = {
+      show-in-lock-screen = false;
+    };
+
     # GPasteショートカット
     "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0" = {
       name = "GPaste Toggle";

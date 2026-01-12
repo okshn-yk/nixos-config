@@ -47,11 +47,11 @@
         printf '\033]10;%s\033\\' "$2"  # 前景
       }
 
-      # Codex ラッパー（Dracula テーマで実行）
+      # Codex ラッパー（Dracula テーマで実行、CODEX_HOME をカレントディレクトリに設定）
       codex() {
         _ghostty_set_theme "$_GHOSTTY_DRACULA_BG" "$_GHOSTTY_DRACULA_FG"
         trap '_ghostty_set_theme "$_GHOSTTY_TOKYONIGHT_BG" "$_GHOSTTY_TOKYONIGHT_FG"' EXIT INT TERM
-        command codex "$@"
+        CODEX_HOME="$(pwd)/.codex" command codex "$@"
         local exit_code=$?
         trap - EXIT INT TERM
         _ghostty_set_theme "$_GHOSTTY_TOKYONIGHT_BG" "$_GHOSTTY_TOKYONIGHT_FG"
