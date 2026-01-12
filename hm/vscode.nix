@@ -64,6 +64,9 @@
         "[go]" = {
           "editor.defaultFormatter" = "golang.go";
         };
+
+        # ウィンドウズームレベル（約120%）
+        "window.zoomLevel" = 1;
       };
     };
   };
