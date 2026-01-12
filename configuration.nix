@@ -20,6 +20,10 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  # AMD GPU スリープ復帰問題対策
+  boot.kernelParams = [ "mem_sleep_default=s2idle" ];
+  hardware.graphics.enable = true;
+
   # Nix Settings
   nix.settings = {
     experimental-features = [ "nix-command" "flakes" ];

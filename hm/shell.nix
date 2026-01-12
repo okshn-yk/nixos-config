@@ -29,6 +29,35 @@
       # ble.sh 初期化（最初に読み込む）
       [[ $- == *i* ]] && source "${pkgs.blesh}/share/blesh/ble.sh" --noattach
 
+      # ===========================================================================
+      # Ghostty テーマ動的切り替え（Claude/Codex 視認性向上）
+      # ===========================================================================
+
+      # TokyoNight Night テーマ色
+      _GHOSTTY_TOKYONIGHT_BG="#1a1b26"
+      _GHOSTTY_TOKYONIGHT_FG="#c0caf5"
+
+      # Dracula テーマ色
+      _GHOSTTY_DRACULA_BG="#282A36"
+      _GHOSTTY_DRACULA_FG="#F8F8F2"
+
+      # テーマ適用関数
+      _ghostty_set_theme() {
+        printf '\033]11;%s\033\\' "$1"  # 背景
+        printf '\033]10;%s\033\\' "$2"  # 前景
+      }
+
+      # Codex ラッパー（Dracula テーマで実行）
+      codex() {
+        _ghostty_set_theme "$_GHOSTTY_DRACULA_BG" "$_GHOSTTY_DRACULA_FG"
+        trap '_ghostty_set_theme "$_GHOSTTY_TOKYONIGHT_BG" "$_GHOSTTY_TOKYONIGHT_FG"' EXIT INT TERM
+        command codex "$@"
+        local exit_code=$?
+        trap - EXIT INT TERM
+        _ghostty_set_theme "$_GHOSTTY_TOKYONIGHT_BG" "$_GHOSTTY_TOKYONIGHT_FG"
+        return $exit_code
+      }
+
       # ghq + fzf連携
       function zrun_ghq_fzf() {
         local src=$(ghq list -p | fzf --preview "ls -la {}")
