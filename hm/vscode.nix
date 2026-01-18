@@ -67,6 +67,10 @@
 
         # ウィンドウズームレベル（約120%）
         "window.zoomLevel" = 1;
+
+        # Nixで管理しているためアップデート通知を無効化
+        "update.mode" = "none";
+        "update.showReleaseNotes" = false;
       };
     };
   };

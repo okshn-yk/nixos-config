@@ -10,6 +10,7 @@
     wget
     git
     curl
+    dnsutils # dig, nslookup
     
     # Encryption Tools
     sops
