@@ -8,6 +8,15 @@ let
     # モデル名を取得
     MODEL=$(echo "$input" | ${pkgs.jq}/bin/jq -r '.model.display_name')
 
+    # Gitブランチを取得
+    GIT_BRANCH=""
+    if ${pkgs.git}/bin/git rev-parse --git-dir > /dev/null 2>&1; then
+        BRANCH=$(${pkgs.git}/bin/git branch --show-current 2>/dev/null)
+        if [ -n "$BRANCH" ]; then
+            GIT_BRANCH=" [$BRANCH]"
+        fi
+    fi
+
     # コンテキストウィンドウ情報を取得
     CONTEXT_SIZE=$(echo "$input" | ${pkgs.jq}/bin/jq -r '.context_window.context_window_size')
     USAGE=$(echo "$input" | ${pkgs.jq}/bin/jq '.context_window.current_usage')
@@ -31,9 +40,9 @@ let
         fi
         RESET="\033[0m"
 
-        echo -e "[$MODEL] Context: ''${COLOR}''${PERCENT_USED}%''${RESET} (''${CURRENT_TOKENS}/''${CONTEXT_SIZE})"
+        echo -e "[$MODEL]''${GIT_BRANCH} Context: ''${COLOR}''${PERCENT_USED}%''${RESET} (''${CURRENT_TOKENS}/''${CONTEXT_SIZE})"
     else
-        echo "[$MODEL] Context: 0%"
+        echo "[$MODEL]''${GIT_BRANCH} Context: 0%"
     fi
   '';
 in
