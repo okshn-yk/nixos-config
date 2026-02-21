@@ -68,4 +68,52 @@
         }
     }
   '';
+
+  # tmux
+  programs.tmux = {
+    enable = true;
+    terminal = "tmux-256color";
+    shell = "\${pkgs.bash}/bin/bash";
+    prefix = "C-s";
+    baseIndex = 1;
+    escapeTime = 0;
+    historyLimit = 50000;
+    mouse = true;
+    keyMode = "vi";
+    plugins = with pkgs.tmuxPlugins; [
+      sensible
+      yank
+    ];
+    extraConfig = ''
+      # True Color対応
+      set -ag terminal-overrides ",xterm-256color:RGB"
+
+      # ペイン分割 (カレントディレクトリを引き継ぐ)
+      bind | split-window -h -c "#{pane_current_path}"
+      bind - split-window -v -c "#{pane_current_path}"
+
+      # ペイン移動 (vim風)
+      bind h select-pane -L
+      bind j select-pane -D
+      bind k select-pane -U
+      bind l select-pane -R
+
+      # ペインリサイズ
+      bind -r H resize-pane -L 5
+      bind -r J resize-pane -D 5
+      bind -r K resize-pane -U 5
+      bind -r L resize-pane -R 5
+
+      # 新規ウィンドウ (カレントディレクトリを引き継ぐ)
+      bind c new-window -c "#{pane_current_path}"
+
+      # ステータスバー
+      set -g status-position top
+      set -g status-style "bg=#1a1b26,fg=#c0caf5"
+      set -g status-left "#[fg=#7aa2f7,bold] #S "
+      set -g status-right "#[fg=#565f89] %Y-%m-%d %H:%M "
+      set -g window-status-format "#[fg=#565f89] #I:#W "
+      set -g window-status-current-format "#[fg=#7aa2f7,bold] #I:#W "
+    '';
+  };
 }
