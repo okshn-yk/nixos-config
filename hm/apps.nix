@@ -34,6 +34,7 @@
     obsidian
     slack
     epiphany
+    xmind
     gnomeExtensions.appindicator
 
     # Clipboard Manager

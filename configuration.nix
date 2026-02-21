@@ -48,6 +48,7 @@
     "1password-cli"
     "1password-gui"
     "terraform"
+    "xmind"
   ];
 
   # State Version
