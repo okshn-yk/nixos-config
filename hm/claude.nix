@@ -60,7 +60,7 @@ in
     nixd              # LSP: 構文チェック、定義ジャンプ、ドキュメント参照用
     nix-search-cli    # Search: 'search.nixos.org' のCLI版。パッケージやオプションの調査用
     nix-tree          # Analysis: 依存関係のツリー表示。「なぜこのパッケージが入った？」の調査用
-    nixfmt-rfc-style  # Formatter: コードを編集した後の整形用
+    nixfmt            # Formatter: コードを編集した後の整形用
 
   ];
 
@@ -77,6 +77,24 @@ in
   # Activation Hook: settings.jsonにstatusLine設定を追加/更新
   # 既存の設定（enabledPlugins等）を保持しつつstatusLineのみ更新
   # ===========================================================================
+  home.activation.claudeMcpConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    MCP_FILE="$HOME/.claude/mcp.json"
+    mkdir -p "$HOME/.claude"
+
+    if [ ! -f "$MCP_FILE" ]; then
+      echo '{}' > "$MCP_FILE"
+    fi
+
+    # Playwright MCP: NixOS用パッチ済みブラウザパスを設定
+    ${pkgs.jq}/bin/jq '.mcpServers.playwright = {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"],
+      "env": {
+        "PLAYWRIGHT_BROWSERS_PATH": "${pkgs.playwright-driver.browsers}"
+      }
+    }' "$MCP_FILE" > "$MCP_FILE.tmp" && mv "$MCP_FILE.tmp" "$MCP_FILE"
+  '';
+
   home.activation.claudeStatusLine = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     SETTINGS_FILE="$HOME/.claude/settings.json"
 

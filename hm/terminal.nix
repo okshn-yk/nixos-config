@@ -73,7 +73,7 @@
   programs.tmux = {
     enable = true;
     terminal = "tmux-256color";
-    shell = "\${pkgs.bash}/bin/bash";
+    shell = "${pkgs.bash}/bin/bash";
     prefix = "C-s";
     baseIndex = 1;
     escapeTime = 0;
@@ -85,8 +85,11 @@
       yank
     ];
     extraConfig = ''
-      # True Color対応
+      # True Color + SGR拡張マウス対応 (タッチパッドスクロール修正)
+      set -ag terminal-overrides ",xterm-ghostty:RGB:Ms=\\E]52;%p1%s;%p2%s\\E\\\\"
       set -ag terminal-overrides ",xterm-256color:RGB"
+      set -as terminal-features ",xterm-ghostty:mouse"
+      set -as terminal-features ",xterm-256color:mouse"
 
       # ペイン分割 (カレントディレクトリを引き継ぐ)
       bind | split-window -h -c "#{pane_current_path}"
@@ -106,6 +109,10 @@
 
       # 新規ウィンドウ (カレントディレクトリを引き継ぐ)
       bind c new-window -c "#{pane_current_path}"
+
+      # スクロール (トラックパッド/トラックボール対応)
+      bind -n WheelUpPane if-shell -F -t = "#{mouse_any_flag}" "send-keys -M" "if -Ft= '#{pane_in_mode}' 'send-keys -M' 'select-pane -t=; copy-mode -e; send-keys -M'"
+      bind -n WheelDownPane select-pane -t= \; send-keys -M
 
       # ステータスバー
       set -g status-position top

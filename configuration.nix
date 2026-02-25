@@ -49,6 +49,7 @@
     "1password-gui"
     "terraform"
     "xmind"
+    "google-chrome"
   ];
 
   # State Version

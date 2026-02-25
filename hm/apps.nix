@@ -35,6 +35,7 @@
     slack
     epiphany
     xmind
+    google-chrome
     gnomeExtensions.appindicator
 
     # Clipboard Manager
