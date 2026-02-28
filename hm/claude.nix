@@ -77,22 +77,19 @@ in
   # Activation Hook: settings.jsonにstatusLine設定を追加/更新
   # 既存の設定（enabledPlugins等）を保持しつつstatusLineのみ更新
   # ===========================================================================
+  # Playwright MCP: NixOSではChromeが/opt/google/chrome/chromeに無いため
+  # --executable-pathでNixOS上のChromeパスを直接指定
+  # 設定先: ~/.claude.json（ユーザーレベル = 全リポジトリ共通）
   home.activation.claudeMcpConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    MCP_FILE="$HOME/.claude/mcp.json"
-    mkdir -p "$HOME/.claude"
+    CLAUDE_JSON="$HOME/.claude.json"
 
-    if [ ! -f "$MCP_FILE" ]; then
-      echo '{}' > "$MCP_FILE"
+    if [ -f "$CLAUDE_JSON" ]; then
+      ${pkgs.jq}/bin/jq '.mcpServers.playwright = {
+        "type": "stdio",
+        "command": "npx",
+        "args": ["@playwright/mcp@latest", "--executable-path", "/etc/profiles/per-user/okshin/bin/google-chrome-stable"]
+      }' "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
     fi
-
-    # Playwright MCP: NixOS用パッチ済みブラウザパスを設定
-    ${pkgs.jq}/bin/jq '.mcpServers.playwright = {
-      "command": "npx",
-      "args": ["@playwright/mcp@latest"],
-      "env": {
-        "PLAYWRIGHT_BROWSERS_PATH": "${pkgs.playwright-driver.browsers}"
-      }
-    }' "$MCP_FILE" > "$MCP_FILE.tmp" && mv "$MCP_FILE.tmp" "$MCP_FILE"
   '';
 
   home.activation.claudeStatusLine = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

@@ -97,7 +97,15 @@
   };
   
   # Rclone package itself
-  environment.systemPackages = [ pkgs.rclone ];
+  environment.systemPackages = with pkgs; [ rclone wl-clipboard ];
+
+  # --- Playwright互換: Chromeシンボリックリンク ---
+  # PlaywrightはLinuxで /opt/google/chrome/chrome をハードコードで参照する。
+  # NixOSではChromeがnix store配下にあるため、tmpfilesでシンボリックリンクを作成。
+  systemd.tmpfiles.rules = [
+    "d /opt/google/chrome 0755 root root -"
+    "L+ /opt/google/chrome/chrome - - - - ${pkgs.google-chrome}/bin/google-chrome-stable"
+  ];
 
   # --- Locate (ファイル検索高速化) ---
   # 毎日DBを更新し、locateコマンドで瞬時検索
