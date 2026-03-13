@@ -6,6 +6,7 @@
   sops.secrets."aws/sso_start_url" = {};
   sops.secrets."aws/account_id/admin" = {};
   sops.secrets."aws/account_id/dev" = {};
+  sops.secrets."aws/account_id/prd" = {};
 
   # File Template
   sops.templates."aws-config" = {
@@ -29,6 +30,13 @@
       sso_session = my-sso
       sso_account_id = ${config.sops.placeholder."aws/account_id/dev"}
       sso_role_name = DevAdministratorAccess
+      region = ap-northeast-1
+      output = json
+
+      [profile prd]
+      sso_session = my-sso
+      sso_account_id = ${config.sops.placeholder."aws/account_id/prd"}
+      sso_role_name = AdministratorAccess
       region = ap-northeast-1
       output = json
     '';
