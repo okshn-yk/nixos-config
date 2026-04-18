@@ -22,9 +22,9 @@
 
       # 大きなプッシュ用のHTTP設定
       http = {
-        postBuffer = 524288000;  # 500MB
-        lowSpeedLimit = 0;
-        lowSpeedTime = 999999;
+        postBuffer = 524288000; # 500MB
+        lowSpeedLimit = 1000; # 1KB/s 未満を異常とみなす
+        lowSpeedTime = 60; # 60秒続いたらタイムアウト
       };
 
       # ghqの設定

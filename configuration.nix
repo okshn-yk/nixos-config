@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
   imports = [
@@ -21,12 +26,18 @@
   boot.loader.efi.canTouchEfiVariables = true;
 
   # AMD GPU スリープ復帰問題対策
-  boot.kernelParams = [ "mem_sleep_default=s2idle" ];
+  boot.kernelParams = [
+    "mem_sleep_default=s2idle"
+    "amd_pstate=active"
+  ];
   hardware.graphics.enable = true;
 
   # Nix Settings
   nix.settings = {
-    experimental-features = [ "nix-command" "flakes" ];
+    experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
     # nix-community バイナリキャッシュ（ビルド時間短縮）
     substituters = [ "https://nix-community.cachix.org" ];
     trusted-public-keys = [ "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=" ];
@@ -36,21 +47,23 @@
     dates = "weekly";
     options = "--delete-older-than 7d";
   };
-  
+
   # 非フリーパッケージ許可（ホワイトリスト方式）
-  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-    "vscode"
-    "vscode-extension-ms-vscode-remote-remote-ssh"
-    "vscode-extension-fill-labs-dependi"
-    "slack"
-    "obsidian"
-    "1password"
-    "1password-cli"
-    "1password-gui"
-    "terraform"
-    "xmind"
-    "google-chrome"
-  ];
+  nixpkgs.config.allowUnfreePredicate =
+    pkg:
+    builtins.elem (lib.getName pkg) [
+      "vscode"
+      "vscode-extension-ms-vscode-remote-remote-ssh"
+      "vscode-extension-fill-labs-dependi"
+      "slack"
+      "obsidian"
+      "1password"
+      "1password-cli"
+      "1password-gui"
+      "terraform"
+      "xmind"
+      "google-chrome"
+    ];
 
   # State Version
   system.stateVersion = "25.11";
@@ -65,10 +78,12 @@
   users.users.okshin = {
     isNormalUser = true;
     description = "okshin";
-    extraGroups = [ "networkmanager" "wheel" ];
-    packages = with pkgs; [];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+    ];
+    packages = with pkgs; [ ];
   };
-
 
   # Sops General Settings (Keys)
   sops = {
@@ -95,9 +110,12 @@
       RestartSec = "10s";
     };
   };
-  
+
   # Rclone package itself
-  environment.systemPackages = with pkgs; [ rclone wl-clipboard ];
+  environment.systemPackages = with pkgs; [
+    rclone
+    wl-clipboard
+  ];
 
   # --- Playwright互換: Chromeシンボリックリンク ---
   # PlaywrightはLinuxで /opt/google/chrome/chrome をハードコードで参照する。
