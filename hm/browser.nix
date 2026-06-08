@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, config, ... }:
 
 {
   # ===========================================================================
@@ -7,6 +7,8 @@
 
   programs.firefox = {
     enable = true;
+    # プロファイルを XDG パス (~/.config/mozilla/firefox) に配置
+    configPath = "${config.xdg.configHome}/mozilla/firefox";
     # 1Password連携
     nativeMessagingHosts = [ pkgs._1password-gui ];
     profiles.default = {

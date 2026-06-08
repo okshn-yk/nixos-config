@@ -54,7 +54,7 @@ in
   home.packages = with pkgs; [
     # 1. Claude Code
     # claude-code
-    inputs.claude-code-nix.packages.${pkgs.system}.default
+    inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
 
     # 1b. Codex (OpenAI Codex CLI)
     codex

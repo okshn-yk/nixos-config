@@ -35,9 +35,10 @@
 
   outputs = { self, nixpkgs, home-manager, xremap-flake, sops-nix, rust-overlay, ... }@inputs: {
     nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
       specialArgs = { inherit inputs; }; # inputsをconfiguration.nixへ渡す
       modules = [
+        { nixpkgs.hostPlatform = "x86_64-linux"; }
+
         ./configuration.nix
 
         # システム全体でrust-binを使用可能に
