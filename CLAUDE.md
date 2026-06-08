@@ -62,6 +62,12 @@ nix-search <クエリ>
 
 sops-nix と age 暗号化を使用。`secrets.yaml`に保存し、SSH ホスト鍵（`/etc/ssh/ssh_host_ed25519_key`）で復号。
 
+### Insecure パッケージの扱い
+
+`configuration.nix` の `nixpkgs.config.permittedInsecurePackages` に許可リストを置く。
+各エントリには CVE 番号 / 引き込み元 / 許可した理由 / 削除条件 をインラインコメントで明記する。
+`nix flake update` 後はこのリストの要否を見直す。
+
 ## 利用可能な Nix ツール
 
 - `nixd` - Nix LSP（IDE 補完・定義ジャンプ）
