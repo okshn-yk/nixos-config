@@ -16,13 +16,11 @@
   };
 
   # フタ閉じ・電源ボタン・アイドル時の動作
-  services.logind = {
-    lidSwitch = "suspend-then-hibernate";
-    lidSwitchExternalPower = "suspend";
-    lidSwitchDocked = "ignore";
-    settings.Login = {
-      HandlePowerKey = "suspend-then-hibernate";
-    };
+  services.logind.settings.Login = {
+    HandleLidSwitch = "suspend-then-hibernate";
+    HandleLidSwitchExternalPower = "suspend";
+    HandleLidSwitchDocked = "ignore";
+    HandlePowerKey = "suspend-then-hibernate";
   };
 
   # ==========================================
