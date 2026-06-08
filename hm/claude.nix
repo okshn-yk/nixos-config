@@ -56,6 +56,9 @@ in
     # claude-code
     inputs.claude-code-nix.packages.${pkgs.system}.default
 
+    # 1b. Codex (OpenAI Codex CLI)
+    codex
+
     # 2. Nix Knowledge Tools
     nixd              # LSP: 構文チェック、定義ジャンプ、ドキュメント参照用
     nix-search-cli    # Search: 'search.nixos.org' のCLI版。パッケージやオプションの調査用
