@@ -1,5 +1,62 @@
 { pkgs, config, ... }:
 
+let
+  # ===========================================================================
+  # Firefox 系ブラウザ共有設定 (Firefox / Floorp で共用)
+  # programs.floorp は programs.firefox と同一スキーマのため設定を流用できる
+  # ===========================================================================
+
+  sharedSettings = {
+    # ▼ スペルチェックを完全に無効化
+    # 0: 無効
+    # 1: 複数行の入力ボックスのみ有効 (デフォルト)
+    # 2: すべての入力ボックスで有効
+    "layout.spellcheckDefault" = 0;
+    "network.dns.disableIPv6" = true;
+    "privacy.resistFingerprinting" = false;
+
+    # ▼ 標準の翻訳機能を有効化
+    "browser.translations.enable" = true;
+    "browser.translations.panelShown" = true;
+    "browser.translations.automaticallyPopup" = true;
+
+    # ▼ 非同期クリップボード操作の許可（拡張機能の動作安定化）
+    "dom.events.asyncClipboard.readText" = true;
+    "dom.events.testing.asyncClipboard" = true;
+
+    # ▼ 新しいタブページのスポンサー広告を無効化
+    "browser.newtabpage.activity-stream.showSponsoredTopSites" = false;
+    "browser.newtabpage.activity-stream.showSponsored" = false;
+  };
+
+  # ポリシー設定 (企業向けの管理機能を使ってテレメトリ等を強制オフにする)
+  sharedPolicies = {
+    DisableTelemetry = true;
+    DisableFirefoxStudies = true;
+    EnableTrackingProtection = {
+      Value = true;
+      Locked = true;
+    };
+    DisablePocket = true;
+    DisableFirefoxAccounts = false; # Syncを使いたい場合は false
+    DisableAccounts = false;
+    DisableAppUpdate = true; # Nixで管理するため
+
+    # "New Tab" ページの広告などを消す
+    FirefoxHome = {
+      Search = true;
+      Pocket = false;
+      Snippets = false;
+      TopSites = true;
+      Highlights = false;
+      SponsoredPocket = false;
+      SponsoredTopSites = false;
+    };
+    Preferences = {
+      "media.hardwaremediakeys.enabled" = false;
+    };
+  };
+in
 {
   # ===========================================================================
   # Web Browser Configuration
@@ -15,56 +72,23 @@
       id = 0;
       name = "default";
       isDefault = true;
-
-      settings = {
-        # ▼ スペルチェックを完全に無効化
-        # 0: 無効
-        # 1: 複数行の入力ボックスのみ有効 (デフォルト)
-        # 2: すべての入力ボックスで有効
-        "layout.spellcheckDefault" = 0;
-        "network.dns.disableIPv6" = true;
-        "privacy.resistFingerprinting" = false;
-
-        # ▼ Firefox標準の翻訳機能を有効化
-        "browser.translations.enable" = true;
-        "browser.translations.panelShown" = true;
-        "browser.translations.automaticallyPopup" = true;
-
-        # ▼ 非同期クリップボード操作の許可（拡張機能の動作安定化）
-        "dom.events.asyncClipboard.readText" = true;
-        "dom.events.testing.asyncClipboard" = true;
-
-        # ▼ 新しいタブページのスポンサー広告を無効化
-        "browser.newtabpage.activity-stream.showSponsoredTopSites" = false;
-        "browser.newtabpage.activity-stream.showSponsored" = false;
-      };
+      settings = sharedSettings;
     };
-    # ポリシー設定 (企業向けの管理機能を使ってテレメトリ等を強制オフにする)
-    policies = {
-      DisableTelemetry = true;
-      DisableFirefoxStudies = true;
-      EnableTrackingProtection = {
-        Value = true;
-        Locked = true;
-      };
-      DisablePocket = true;
-      DisableFirefoxAccounts = false; # Syncを使いたい場合は false
-      DisableAccounts = false;
-      DisableAppUpdate = true; # Nixで管理するため
+    policies = sharedPolicies;
+  };
 
-      # "New Tab" ページの広告などを消す
-      FirefoxHome = {
-        Search = true;
-        Pocket = false;
-        Snippets = false;
-        TopSites = true;
-        Highlights = false;
-        SponsoredPocket = false;
-        SponsoredTopSites = false;
-      };
-      Preferences = {
-        "media.hardwaremediakeys.enabled" = false;
-      };
+  # Floorp (Firefox フォーク) を Firefox 設定を流用して併設
+  # 動作確認後、既定ブラウザを切り替える運用を想定
+  programs.floorp = {
+    enable = true;
+    # 1Password連携
+    nativeMessagingHosts = [ pkgs._1password-gui ];
+    profiles.default = {
+      id = 0;
+      name = "default";
+      isDefault = true;
+      settings = sharedSettings;
     };
+    policies = sharedPolicies;
   };
 }
