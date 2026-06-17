@@ -20,7 +20,10 @@
     HandleLidSwitch = "suspend-then-hibernate";
     HandleLidSwitchExternalPower = "suspend";
     HandleLidSwitchDocked = "ignore";
-    HandlePowerKey = "suspend-then-hibernate";
+    # 電源ボタンは GNOME(gsd-media-keys) が握るため、実際の動作は
+    # hm/apps.nix の dconf power-button-action="hibernate" で決まる。
+    # これは GNOME 不在(TTY等)時のフォールバック。
+    HandlePowerKey = "hibernate";
   };
 
   # ==========================================

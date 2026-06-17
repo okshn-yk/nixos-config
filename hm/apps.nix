@@ -65,6 +65,12 @@
       show-in-lock-screen = false;
     };
 
+    # 電源ボタンの動作: AC 接続中でもハイバネート
+    # (フタ閉じの AC 時は configs/laptop.nix で suspend のまま)
+    "org/gnome/settings-daemon/plugins/power" = {
+      power-button-action = "hibernate";
+    };
+
     # GPasteショートカット
     "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0" = {
       name = "GPaste Toggle";
