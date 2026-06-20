@@ -5,6 +5,7 @@
   imports = [
     ./hm/shell.nix
     ./hm/vscode.nix
+    ./hm/zed.nix
     ./hm/git.nix
     ./hm/apps.nix
     ./hm/terminal.nix
@@ -25,7 +26,7 @@
     BROWSER = "firefox";
     DEFAULT_BROWSER = "firefox";
   };
-  
+
   # Path (全体)
   home.sessionPath = [
     "$HOME/.bun/bin"

@@ -43,6 +43,7 @@ nix-search <クエリ>
 | `laptop.nix`     | ラップトップ固有のハードウェア設定                                         |
 | `wifi.nix`       | ネットワーク設定                                                           |
 | `aws-config.nix` | AWS SSO 設定                                                               |
+| `ollama.nix`     | ローカルLLM（Ollama, ROCm試行）。Zed インライン補完バックエンド            |
 
 ### Home Manager 設定 (`hm/`)
 

@@ -14,6 +14,8 @@
     ./configs/laptop.nix
     ./configs/wifi.nix
     ./configs/keymap.nix
+    ./configs/mouse.nix
+    ./configs/ollama.nix
     ./configs/performance.nix
     ./configs/security.nix
   ];

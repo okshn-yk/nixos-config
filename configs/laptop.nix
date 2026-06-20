@@ -70,6 +70,12 @@
       RUNTIME_PM_ON_AC = "on";
       RUNTIME_PM_ON_BAT = "auto";
 
+      # 有線NIC(Realtek RTL8168/r8169)をランタイムPMから除外。
+      # ランタイムPMでサスペンドするとケーブル挿入時の復帰が不安定になり
+      # carrier が上がらず(NO-CARRIER)リンクできない問題が起きるため常時通電。
+      # 0000:05:00.0=本体RJ45(enp5s0), 0000:02:00.0=もう一方のRTL8168(enp2s0f0)
+      RUNTIME_PM_DISABLE = "0000:05:00.0 0000:02:00.0";
+
       # ストレージ省電力
       AHCI_RUNTIME_PM_ON_AC = "on";
       AHCI_RUNTIME_PM_ON_BAT = "auto";
