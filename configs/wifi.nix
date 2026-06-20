@@ -2,9 +2,9 @@
 
 {
   # WiFi Configuration via Sops
-  
-  sops.secrets.wifi_ssid = {};
-  sops.secrets.wifi_psk = {};
+
+  sops.secrets.wifi_ssid = { };
+  sops.secrets.wifi_psk = { };
 
   # Template Definition
   sops.templates."home-wifi.nmconnection" = {
@@ -39,7 +39,9 @@
   systemd.services."NetworkManager-pre" = {
     script = ''
       mkdir -p /etc/NetworkManager/system-connections/
-      ln -sf ${config.sops.templates."home-wifi.nmconnection".path} /etc/NetworkManager/system-connections/home-wifi.nmconnection
+      ln -sf ${
+        config.sops.templates."home-wifi.nmconnection".path
+      } /etc/NetworkManager/system-connections/home-wifi.nmconnection
       chmod 600 /etc/NetworkManager/system-connections/home-wifi.nmconnection
     '';
     before = [ "NetworkManager.service" ];

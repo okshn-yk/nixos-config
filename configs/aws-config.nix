@@ -3,10 +3,10 @@
 {
   # AWS Configuration
   # Secrets Define
-  sops.secrets."aws/sso_start_url" = {};
-  sops.secrets."aws/account_id/admin" = {};
-  sops.secrets."aws/account_id/dev" = {};
-  sops.secrets."aws/account_id/prd" = {};
+  sops.secrets."aws/sso_start_url" = { };
+  sops.secrets."aws/account_id/admin" = { };
+  sops.secrets."aws/account_id/dev" = { };
+  sops.secrets."aws/account_id/prd" = { };
 
   # File Template
   sops.templates."aws-config" = {

@@ -107,23 +107,14 @@
   # ==========================================
   # Services (Others)
   # ==========================================
-  # Google Drive Auto-mount
-  systemd.user.services.rclone-gdrive = {
-    description = "rclone mount for Google Drive";
-    after = [ "network-online.target" ];
-    wants = [ "network-online.target" ];
-    wantedBy = [ "default.target" ];
-    path = [ "/run/wrappers" ];
-    serviceConfig = {
-      Type = "simple";
-      ExecStart = "${pkgs.rclone}/bin/rclone mount gdrive: %h/gdrive --vfs-cache-mode full";
-      ExecStop = "/run/wrappers/bin/fusermount -u %h/gdrive";
-      Restart = "on-failure";
-      RestartSec = "10s";
-    };
-  };
+  # Google Drive はブラウザ(drive.google.com)で運用する。
+  # 以前は rclone で ~/gdrive に FUSE マウントしていたが、ネット依存のFUSEが
+  # 張られたままサスペンドすると読み込み中プロセスが D 状態で固着し、
+  # プロセスのフリーズに失敗 → suspend-then-hibernate が失敗ループして
+  # バッテリーを使い切る問題があったため自動マウントは廃止。
+  # rclone コマンドと認証情報(~/.config/rclone)は手動同期用に残してある。
 
-  # Rclone package itself
+  # Rclone package (手動の同期/マウント用。自動マウントはしない)
   environment.systemPackages = with pkgs; [
     rclone
     wl-clipboard

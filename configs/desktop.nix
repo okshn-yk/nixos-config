@@ -2,11 +2,16 @@
 
 {
   # Desktop Environment (GNOME / Audio / Fonts)
-  
+
   # X11 & GNOME
   services.xserver.enable = true;
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
+
+  # GNOME Online Accounts は無効化。
+  # Google Drive はブラウザ運用方針（configuration.nix 参照）のため不要で、
+  # ログイン時の Google 再認証ポップアップも抑止する。
+  services.gnome.gnome-online-accounts.enable = false;
 
   # XDG Desktop Portal
   xdg.portal = {
@@ -72,8 +77,14 @@
     ];
     fontconfig = {
       defaultFonts = {
-        monospace = [ "HackGen Console" "Noto Sans Mono CJK JP" ];
-        sansSerif = [ "HackGen" "Noto Sans CJK JP" ];
+        monospace = [
+          "HackGen Console"
+          "Noto Sans Mono CJK JP"
+        ];
+        sansSerif = [
+          "HackGen"
+          "Noto Sans CJK JP"
+        ];
         serif = [ "Noto Serif CJK JP" ];
       };
     };

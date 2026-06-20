@@ -15,6 +15,13 @@
     HibernateDelaySec = "30min";
   };
 
+  # ハイバネートイメージを最小化（=積極的にメモリ解放）して確実に成功させる。
+  # 既定値(RAMの約2/5)では、保存対象がRAMの約半分に達するとアトミックコピー用の
+  # 空きRAMが枯渇し "PM: hibernation: Error -12 creating image" で失敗、
+  # 消費電力の大きい s2idle に戻ってバッテリーを使い切る事象が発生したため。
+  # 0 = カーネルが可能な限り小さいイメージを作る。ハイバネート時のみ作用し通常動作に影響なし。
+  systemd.tmpfiles.rules = [ "w /sys/power/image_size - - - - 0" ];
+
   # フタ閉じ・電源ボタン・アイドル時の動作
   services.logind.settings.Login = {
     HandleLidSwitch = "suspend-then-hibernate";

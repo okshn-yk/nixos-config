@@ -11,7 +11,7 @@
     git
     curl
     dnsutils # dig, nslookup
-    
+
     # Encryption Tools
     sops
     age
@@ -31,7 +31,7 @@
     dockerCompat = true;
     defaultNetwork.settings.dns_enabled = true;
   };
-  
+
   # Editor Variable
   environment.variables.EDITOR = "vim";
 }
