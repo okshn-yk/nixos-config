@@ -14,6 +14,9 @@
       # ユーザー拡張の全体無効化フラグ。true だと enabled-extensions に
       # 登録しても拡張が INITIALIZED 止まりで起動しない。明示的に false にする。
       disable-user-extensions = false;
+      # 実ユーザーが1人だと GNOME は電源メニューの「ログアウト」を隠す。
+      # 常に表示させる。
+      always-show-log-out = true;
       enabled-extensions = [
         "appindicatorsupport@rgcjonas.gmail.com"
         "auto-move-windows@gnome-shell-extensions.gcampax.github.com"
