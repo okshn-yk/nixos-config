@@ -23,23 +23,21 @@
     btop
 
     # Security Scanning
-    checkov  # IaC セキュリティスキャン（Terraform, Dockerfile等）
-    trivy    # コンテナ・ファイルシステム脆弱性スキャン
+    checkov # IaC セキュリティスキャン（Terraform, Dockerfile等）
+    trivy # コンテナ・ファイルシステム脆弱性スキャン
 
     # IaC Tools
-    tenv  # Terraform/Terragrunt/OpenTofu バージョンマネージャー
+    tenv # Terraform/Terragrunt/OpenTofu バージョンマネージャー
 
     # GUI Apps
-    # wezterm
     obsidian
     slack
-    epiphany
     xmind
-    google-chrome
+    google-chrome # Playwright MCP が依存（削除不可）
     gnomeExtensions.appindicator
 
     # Clipboard Manager
-    gpaste  # GNOMEネイティブのクリップボードマネージャー
+    gpaste # GNOMEネイティブのクリップボードマネージャー
   ];
 
   # GPasteデーモン自動起動
@@ -87,7 +85,7 @@
 
     # GNOMEキーバインド
     "org/gnome/shell/keybindings" = {
-      toggle-message-tray = ["<Super>t"];
+      toggle-message-tray = [ "<Super>t" ];
     };
   };
 

@@ -17,7 +17,10 @@
       # フォント
       font-family = "HackGen Console";
       font-size = 14;
-      font-feature = ["calt" "liga"];
+      font-feature = [
+        "calt"
+        "liga"
+      ];
 
       # --- ウィンドウ (没入感の向上) ---
       window-padding-x = 6;
@@ -37,8 +40,8 @@
 
       # キーバインド設定
       "keybind" = [
-        "shift+enter=text:\\x1b\\x0d"  # Claude Code改行
-        "ctrl+shift+d=close_surface"   # ペインを閉じる
+        "shift+enter=text:\\x1b\\x0d" # Claude Code改行
+        "ctrl+shift+d=close_surface" # ペインを閉じる
       ];
     };
   };

@@ -1,4 +1,9 @@
-{ config, pkgs, ... }:
+{
+  config,
+  pkgs,
+  username,
+  ...
+}:
 
 {
   # AWS Configuration
@@ -10,8 +15,8 @@
 
   # File Template
   sops.templates."aws-config" = {
-    path = "/home/okshin/.aws/config";
-    owner = "okshin";
+    path = "/home/${username}/.aws/config";
+    owner = username;
     mode = "0600";
     content = ''
       [sso-session my-sso]

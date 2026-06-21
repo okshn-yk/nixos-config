@@ -2,6 +2,8 @@
   config,
   pkgs,
   lib,
+  username,
+  hostName,
   ...
 }:
 
@@ -81,20 +83,19 @@
   system.stateVersion = "25.11";
 
   # Networking Core
-  networking.hostName = "nixos";
+  networking.hostName = hostName;
   networking.networkmanager.enable = true;
 
   # ==========================================
   # User & Global Settings
   # ==========================================
-  users.users.okshin = {
+  users.users.${username} = {
     isNormalUser = true;
-    description = "okshin";
+    description = username;
     extraGroups = [
       "networkmanager"
       "wheel"
     ];
-    packages = with pkgs; [ ];
   };
 
   # Sops General Settings (Keys)

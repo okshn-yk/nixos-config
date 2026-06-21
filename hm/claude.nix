@@ -1,4 +1,10 @@
-{ pkgs, inputs, lib, ... }:
+{
+  pkgs,
+  inputs,
+  lib,
+  username,
+  ...
+}:
 
 let
   # ステータスライン用スクリプト
@@ -60,10 +66,10 @@ in
     codex
 
     # 2. Nix Knowledge Tools
-    nixd              # LSP: 構文チェック、定義ジャンプ、ドキュメント参照用
-    nix-search-cli    # Search: 'search.nixos.org' のCLI版。パッケージやオプションの調査用
-    nix-tree          # Analysis: 依存関係のツリー表示。「なぜこのパッケージが入った？」の調査用
-    nixfmt            # Formatter: コードを編集した後の整形用
+    nixd # LSP: 構文チェック、定義ジャンプ、ドキュメント参照用
+    nix-search-cli # Search: 'search.nixos.org' のCLI版。パッケージやオプションの調査用
+    nix-tree # Analysis: 依存関係のツリー表示。「なぜこのパッケージが入った？」の調査用
+    nixfmt # Formatter: コードを編集した後の整形用
 
   ];
 
@@ -86,13 +92,16 @@ in
   home.activation.claudeMcpConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     CLAUDE_JSON="$HOME/.claude.json"
 
-    if [ -f "$CLAUDE_JSON" ]; then
-      ${pkgs.jq}/bin/jq '.mcpServers.playwright = {
-        "type": "stdio",
-        "command": "npx",
-        "args": ["@playwright/mcp@latest", "--executable-path", "/etc/profiles/per-user/okshin/bin/google-chrome-stable"]
-      }' "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
+    # 新規環境では ~/.claude.json が無いため、空の JSON を作ってから設定を流し込む。
+    if [ ! -f "$CLAUDE_JSON" ]; then
+      echo '{}' > "$CLAUDE_JSON"
     fi
+
+    ${pkgs.jq}/bin/jq '.mcpServers.playwright = {
+      "type": "stdio",
+      "command": "${pkgs.playwright-mcp}/bin/playwright-mcp",
+      "args": ["--executable-path", "/etc/profiles/per-user/${username}/bin/google-chrome-stable"]
+    }' "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
   '';
 
   home.activation.claudeStatusLine = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -113,13 +122,4 @@ in
       "padding": 0
     }' "$SETTINGS_FILE" > "$SETTINGS_FILE.tmp" && mv "$SETTINGS_FILE.tmp" "$SETTINGS_FILE"
   '';
-
-  # ===========================================================================
-  # Environment Variables
-  # 必要に応じてClaudeの動作環境変数を設定します
-  # ===========================================================================
-  home.sessionVariables = {
-    # Nix環境でClaudeを使う際、利用状況やテレメトリを制御したい場合はここに記述
-    # CLAUDE_CODE_USAGE_REPORTING = "false";
-  };
 }

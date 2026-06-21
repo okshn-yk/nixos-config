@@ -2,7 +2,7 @@
 
 {
   home.packages = with pkgs; [
-    gh 
+    gh
     lazygit
     ghq
   ];
@@ -35,7 +35,10 @@
       # URLの書き換え設定
       url = {
         "https://github.com/" = {
-          insteadOf = [ "git@github.com:" "ssh://git@github.com/" ];
+          insteadOf = [
+            "git@github.com:"
+            "ssh://git@github.com/"
+          ];
         };
       };
     };

@@ -3,8 +3,8 @@
 {
   # CLI Tools Package
   home.packages = with pkgs; [
-    fd     # find の高速代替
-    blesh  # ble.sh - Bash Line Editor（オートサジェスト・構文ハイライト）
+    fd # find の高速代替
+    blesh # ble.sh - Bash Line Editor（オートサジェスト・構文ハイライト）
   ];
 
   # Bash & Aliases
@@ -13,18 +13,17 @@
     enableCompletion = true;
     shellAliases = {
       # eza
-      ls   = "eza --icons --git";
-      ll   = "eza -hl --icons --git";
-      la   = "eza -hla --icons --git";
+      ls = "eza --icons --git";
+      ll = "eza -hl --icons --git";
+      la = "eza -hla --icons --git";
       tree = "eza --tree";
       # fd (隠しファイル込み検索)
-      fdh  = "fd --hidden --no-ignore";
+      fdh = "fd --hidden --no-ignore";
       # aws profile
       adev = "export AWS_PROFILE=dev && aws sso login";
       aadm = "export AWS_PROFILE=admin && aws sso login";
       aprd = "export AWS_PROFILE=prd && aws sso login";
-      # update-claudcode
-      update-claude = "cd ~/nixos-config && nix flake update claude-code-nix && if ! git diff --quiet flake.lock; then git commit -am 'chore: update claude-code' && sudo nixos-rebuild switch --flake .; else echo '✅ Claude Code is already up to date.'; fi";
+      # update-claude は関数として initExtra 側で定義（検証→コミットの安全な順序のため）
     };
     initExtra = ''
       # ble.sh 初期化（最初に読み込む）
@@ -59,6 +58,30 @@
         return $exit_code
       }
 
+      # claude-code-nix を安全な順序で更新する。
+      # 更新 → flake check → rebuild test（成功）→ flake.lock のみコミット → switch。
+      # いずれかで失敗したら flake.lock を元に戻し、無関係な作業中変更はコミットしない。
+      update-claude() {
+        cd ~/nixos-config || return 1
+        nix flake update claude-code-nix
+        if git diff --quiet flake.lock; then
+          echo "✅ Claude Code is already up to date."
+          return 0
+        fi
+        if ! nix flake check; then
+          echo "❌ flake check に失敗。flake.lock を元に戻します。"
+          git checkout -- flake.lock
+          return 1
+        fi
+        if ! sudo nixos-rebuild test --flake .; then
+          echo "❌ rebuild test に失敗。flake.lock を元に戻します。"
+          git checkout -- flake.lock
+          return 1
+        fi
+        git commit -m "chore: update claude-code" -- flake.lock
+        sudo nixos-rebuild switch --flake .
+      }
+
       # ghq + fzf連携
       function zrun_ghq_fzf() {
         local src=$(ghq list -p | fzf --preview "ls -la {}")
@@ -77,7 +100,7 @@
 
       # ble.sh アタッチ（最後に実行）
       [[ ''${BLE_VERSION-} ]] && ble-attach
-    '';   
+    '';
   };
 
   # CLI Tools (Starship, Zoxide, etc.)
@@ -85,10 +108,10 @@
     enable = true;
     enableBashIntegration = true;
   };
-  
+
   programs.zoxide = {
     enable = true;
-    enableBashIntegration = false;  # 手動で初期化するため無効化（ble.sh との順序問題回避）
+    enableBashIntegration = false; # 手動で初期化するため無効化（ble.sh との順序問題回避）
     options = [ "--cmd cd" ];
   };
 
@@ -101,13 +124,19 @@
 
   programs.bat = {
     enable = true;
-    config = { theme = "Dracula"; };
+    config = {
+      theme = "Dracula";
+    };
   };
 
   programs.fzf = {
     enable = true;
-    enableBashIntegration = false;  # ble.sh の fzf 統合を使用するため無効化
+    enableBashIntegration = false; # ble.sh の fzf 統合を使用するため無効化
     defaultCommand = "rg --files --hidden --glob '!.git/*'";
-    defaultOptions = [ "--height 40%" "--layout=reverse" "--border" ];
+    defaultOptions = [
+      "--height 40%"
+      "--layout=reverse"
+      "--border"
+    ];
   };
 }

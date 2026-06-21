@@ -20,10 +20,6 @@ let
     "browser.translations.panelShown" = true;
     "browser.translations.automaticallyPopup" = true;
 
-    # ▼ 非同期クリップボード操作の許可（拡張機能の動作安定化）
-    "dom.events.asyncClipboard.readText" = true;
-    "dom.events.testing.asyncClipboard" = true;
-
     # ▼ 新しいタブページのスポンサー広告を無効化
     "browser.newtabpage.activity-stream.showSponsoredTopSites" = false;
     "browser.newtabpage.activity-stream.showSponsored" = false;

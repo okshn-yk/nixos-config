@@ -15,15 +15,15 @@
         dracula-theme.theme-dracula
 
         # --- Rust ---
-        rust-lang.rust-analyzer   # 言語サーバークライアント
-        tamasfe.even-better-toml  # TOMLファイルのサポート
-        fill-labs.dependi         # 依存クレートのバージョン管理
+        rust-lang.rust-analyzer # 言語サーバークライアント
+        tamasfe.even-better-toml # TOMLファイルのサポート
+        fill-labs.dependi # 依存クレートのバージョン管理
 
         # --- Go ---
-        golang.go                 # Go言語サポート (gopls使用)
+        golang.go # Go言語サポート (gopls使用)
 
         # --- Mermaid ---
-        bierner.markdown-mermaid  # Markdownプレビューでmermaid図表示
+        bierner.markdown-mermaid # Markdownプレビューでmermaid図表示
 
         vscode-icons-team.vscode-icons
       ];
@@ -40,7 +40,9 @@
         "nix.serverPath" = "nixd";
         "nix.serverSettings" = {
           "nixd" = {
-            "formatting" = { "command" = [ "nixfmt" ]; };
+            "formatting" = {
+              "command" = [ "nixfmt" ];
+            };
           };
         };
         "[python]" = {
@@ -49,10 +51,10 @@
         "[rust]" = {
           "editor.defaultFormatter" = "rust-lang.rust-analyzer";
         };
-        
+
         # 保存時に自動でclippy（リンター）を走らせる
         "rust-analyzer.check.command" = "clippy";
-        
+
         # Nixで入れた rust-analyzer バイナリを強制的に使わせる設定
         "rust-analyzer.server.path" = "rust-analyzer";
         "rust-analyzer.cargo.buildScripts.enable" = true;
