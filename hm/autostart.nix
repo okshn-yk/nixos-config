@@ -36,11 +36,12 @@
     # .desktop ID は実際のファイル名と完全一致が必須。
     "org/gnome/shell/extensions/auto-move-windows" = {
       application-list = [
-        "floorp.desktop:1"                 # WS 1: ブラウザ
-        "com.mitchellh.ghostty.desktop:2"  # WS 2: ターミナル
-        "code.desktop:2"                   # WS 2: コード
-        "dev.zed.Zed.desktop:3"            # WS 3: エディタ
-        "slack.desktop:4"                  # WS 4: チャット
+        "floorp.desktop:1" # WS 1: ブラウザ
+        "com.mitchellh.ghostty.desktop:2" # WS 2: ターミナル
+        "code.desktop:2" # WS 2: コード
+        "dev.zed.Zed.desktop:3" # WS 3: エディタ
+        "obsidian.desktop:3" # WS 3: ノート
+        "slack.desktop:4" # WS 4: チャット
       ];
     };
   };
@@ -90,6 +91,15 @@
       Type=Application
       Name=Zed
       Exec=sh -c "sleep 4 && ${pkgs.zed-editor}/bin/zeditor"
+      X-GNOME-Autostart-enabled=true
+    '';
+
+    # Obsidian: 5秒待機 (WS3)
+    "autostart/obsidian.desktop".text = ''
+      [Desktop Entry]
+      Type=Application
+      Name=Obsidian
+      Exec=sh -c "sleep 5 && ${pkgs.obsidian}/bin/obsidian"
       X-GNOME-Autostart-enabled=true
     '';
 
