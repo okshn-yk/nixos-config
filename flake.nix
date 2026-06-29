@@ -5,6 +5,16 @@
     # NixOSのパッケージリポジトリ (Unstable版を使用)
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
+    # ble.sh ピン留め専用 nixpkgs（blesh 以外には未使用）。
+    # 2026-06-21 nightly(0.4.0-devel4, 6cffa91) はアタッチ処理の回帰で
+    # 端末に文字入力できなくなるため、既知の正常版(2026-03-10 nightly,
+    # 0.4.0-devel3, b99cadb) を含むこのリビジョンに固定する。
+    # 利用箇所: 下の nixpkgs.overlays（blesh 差し替え）。引込み元: hm/shell.nix。
+    # 解除条件: 上流 nightly でアタッチ回帰が修正されたら、この input と
+    # overlay を削除して通常の nixpkgs の blesh に戻し、端末入力を再検証する。
+    # 経緯と解除手順の詳細: docs/blesh-pin.md
+    nixpkgs-blesh.url = "github:nixos/nixpkgs/567a49d1913ce81ac6e9582e3553dd90a955875f";
+
     # Home Manager設定
     home-manager = {
       url = "github:nix-community/home-manager/master";
@@ -37,6 +47,7 @@
     {
       self,
       nixpkgs,
+      nixpkgs-blesh,
       home-manager,
       xremap-flake,
       sops-nix,
@@ -69,7 +80,16 @@
 
           # システム全体でrust-binを使用可能に
           ({ pkgs, ... }: {
-            nixpkgs.overlays = [ rust-overlay.overlays.default ];
+            nixpkgs.overlays = [
+              rust-overlay.overlays.default
+
+              # blesh ピン留め: 上の nixpkgs-blesh input 参照。
+              # 新しい nightly のアタッチ回帰で端末入力不能になるのを回避するため、
+              # 既知の正常版 blesh に固定する。解除条件は input のコメントを参照。
+              (final: prev: {
+                blesh = nixpkgs-blesh.legacyPackages.${system}.blesh;
+              })
+            ];
           })
 
           # Home Manager モジュールの読み込み

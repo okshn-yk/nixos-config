@@ -76,6 +76,12 @@ sops-nix と age 暗号化を使用。`secrets.yaml`に保存し、SSH ホスト
 各エントリには CVE 番号 / 引き込み元 / 許可した理由 / 削除条件 をインラインコメントで明記する。
 `nix flake update` 後はこのリストの要否を見直す。
 
+### パッケージのピン留め
+
+回帰を含むパッケージは `flake.nix` で正常版にピン留めする。各ピンには引き込み元 / 理由 / 解除条件をコメントで明記し、`nix flake update` 後に解除可否を見直す。
+
+- **blesh**: `0.4.0-devel4+6cffa91`（2026-06-21 nightly）の回帰で **Ghostty で文字入力不能**になるため、専用 input `nixpkgs-blesh` 経由で正常版（2026-03-10）に固定。経緯・解除手順は `docs/blesh-pin.md` 参照。
+
 ## 利用可能な Nix ツール
 
 - `nixd` - Nix LSP（IDE 補完・定義ジャンプ）
