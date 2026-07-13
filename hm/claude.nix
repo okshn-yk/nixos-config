@@ -96,7 +96,8 @@ in
     inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
 
     # 1b. Codex (OpenAI Codex CLI)
-    codex
+    # nixpkgs の codex は上流リリースに数日遅れるため、追従型 flake を使う。
+    inputs.codex-cli-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
 
     # 2. Nix Knowledge Tools
     nixd # LSP: 構文チェック、定義ジャンプ、ドキュメント参照用

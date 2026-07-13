@@ -82,6 +82,28 @@
         sudo nixos-rebuild switch --flake .
       }
 
+      # codex-cli-nix を安全な順序で更新する（update-claude と同じ手順）。
+      update-codex() {
+        cd ~/nixos-config || return 1
+        nix flake update codex-cli-nix
+        if git diff --quiet flake.lock; then
+          echo "✅ Codex is already up to date."
+          return 0
+        fi
+        if ! nix flake check; then
+          echo "❌ flake check に失敗。flake.lock を元に戻します。"
+          git checkout -- flake.lock
+          return 1
+        fi
+        if ! sudo nixos-rebuild test --flake .; then
+          echo "❌ rebuild test に失敗。flake.lock を元に戻します。"
+          git checkout -- flake.lock
+          return 1
+        fi
+        git commit -m "chore: update codex" -- flake.lock
+        sudo nixos-rebuild switch --flake .
+      }
+
       # ghq + fzf連携
       function zrun_ghq_fzf() {
         local src=$(ghq list -p | fzf --preview "ls -la {}")

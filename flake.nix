@@ -28,6 +28,16 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Codex CLI（OpenAI）設定
+    # nixpkgs の codex は上流リリースから数日遅れるため、上流を追従するこの flake を使う。
+    # 公式のビルド済みバイナリを取得するのでコンパイルは走らない。
+    # 引込み元: hm/claude.nix。更新: update-codex（hm/shell.nix）。
+    codex-cli-nix = {
+      url = "github:sadjow/codex-cli-nix";
+      # 依存関係（nixpkgs）をシステムと合わせる
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     #Rust Overlay
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
