@@ -23,7 +23,14 @@
     btop
 
     # Security Scanning
-    checkov # IaC セキュリティスキャン（Terraform, Dockerfile等）
+    # checkov 3.3.6 は aiohttp<3.14.0 を要求するが、nixpkgs更新で aiohttp 3.14.1 が
+    # 引き込まれ pythonRuntimeDepsCheckHook が失敗する。実行時の非互換ではなく
+    # メタデータの上限が保守的なだけなので、ランタイム依存チェックのみ無効化。
+    # 解除条件: nixpkgs側で checkov が aiohttp 3.14 を許可したら override を削除。
+    # 見直し: `nix flake update` 後にこの override の要否を確認。
+    (checkov.overridePythonAttrs (_: {
+      dontCheckRuntimeDeps = true;
+    })) # IaC セキュリティスキャン（Terraform, Dockerfile等）
     trivy # コンテナ・ファイルシステム脆弱性スキャン
 
     # IaC Tools

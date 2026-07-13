@@ -11,6 +11,19 @@ let
   claudeStatuslineScript = pkgs.writeShellScript "claude-statusline" ''
     input=$(cat)
 
+    RESET="\033[0m"
+
+    # 使用率(0-100)に応じたANSI色を返す（80%以上:赤, 50%以上:黄, それ以下:緑）
+    pct_color() {
+        if [ "$1" -ge 80 ]; then
+            printf '\033[31m'   # 赤
+        elif [ "$1" -ge 50 ]; then
+            printf '\033[33m'   # 黄
+        else
+            printf '\033[32m'   # 緑
+        fi
+    }
+
     # モデル名を取得
     MODEL=$(echo "$input" | ${pkgs.jq}/bin/jq -r '.model.display_name')
 
@@ -35,21 +48,41 @@ let
 
         CURRENT_TOKENS=$((INPUT_TOKENS + CACHE_CREATE + CACHE_READ))
         PERCENT_USED=$((CURRENT_TOKENS * 100 / CONTEXT_SIZE))
-
-        # 使用率に応じて色を変更（80%以上:赤, 50%以上:黄, それ以下:緑）
-        if [ "$PERCENT_USED" -ge 80 ]; then
-            COLOR="\033[31m"  # 赤
-        elif [ "$PERCENT_USED" -ge 50 ]; then
-            COLOR="\033[33m"  # 黄
-        else
-            COLOR="\033[32m"  # 緑
-        fi
-        RESET="\033[0m"
-
-        echo -e "[$MODEL]''${GIT_BRANCH} Context: ''${COLOR}''${PERCENT_USED}%''${RESET} (''${CURRENT_TOKENS}/''${CONTEXT_SIZE})"
+        CTX_COLOR=$(pct_color "$PERCENT_USED")
+        CONTEXT_STR="Ctx: ''${CTX_COLOR}''${PERCENT_USED}%''${RESET} (''${CURRENT_TOKENS}/''${CONTEXT_SIZE})"
     else
-        echo "[$MODEL]''${GIT_BRANCH} Context: 0%"
+        CONTEXT_STR="Ctx: 0%"
     fi
+
+    # 利用状況（5h / weekly のレート制限）を取得
+    # ※ rate_limits は Claude.ai サブスク(Pro/Max)で最初のAPI応答後にのみ出現する。
+    #   未取得の場合はセクションごと非表示にする。
+    fmt_reset() {
+        # $1: resets_at (Unix epoch秒) → "→HH:MM" のローカル時刻。無効なら空。
+        if [ -n "$1" ] && [ "$1" != "null" ] && [ "$1" -gt 0 ] 2>/dev/null; then
+            printf '→%s' "$(${pkgs.coreutils}/bin/date -d "@$1" +%H:%M 2>/dev/null)"
+        fi
+    }
+
+    LIMITS=""
+    FIVE_H=$(echo "$input" | ${pkgs.jq}/bin/jq -r '.rate_limits.five_hour.used_percentage // empty')
+    if [ -n "$FIVE_H" ]; then
+        FIVE_H_INT=$(printf '%.0f' "$FIVE_H")
+        FIVE_RESET=$(echo "$input" | ${pkgs.jq}/bin/jq -r '.rate_limits.five_hour.resets_at // empty')
+        LIMITS="5h: $(pct_color "$FIVE_H_INT")''${FIVE_H_INT}%''${RESET}$(fmt_reset "$FIVE_RESET")"
+    fi
+
+    WEEK=$(echo "$input" | ${pkgs.jq}/bin/jq -r '.rate_limits.seven_day.used_percentage // empty')
+    if [ -n "$WEEK" ]; then
+        WEEK_INT=$(printf '%.0f' "$WEEK")
+        WEEK_RESET=$(echo "$input" | ${pkgs.jq}/bin/jq -r '.rate_limits.seven_day.resets_at // empty')
+        WEEK_STR="7d: $(pct_color "$WEEK_INT")''${WEEK_INT}%''${RESET}$(fmt_reset "$WEEK_RESET")"
+        LIMITS="''${LIMITS:+$LIMITS }''${WEEK_STR}"
+    fi
+
+    LINE="[$MODEL]''${GIT_BRANCH} ''${CONTEXT_STR}"
+    [ -n "$LIMITS" ] && LINE="''${LINE} | ''${LIMITS}"
+    echo -e "$LINE"
   '';
 in
 {

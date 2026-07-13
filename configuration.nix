@@ -70,13 +70,14 @@
     ];
 
   # 一時的に許可するinsecureパッケージ
-  # python3.13-ecdsa-0.19.2: CVE-2024-23342 (ECDSA P-256のタイミング攻撃)
+  # python3.14-ecdsa-0.19.2: CVE-2024-23342 (ECDSA P-256のタイミング攻撃)
   #   引き込み元: awscli2 の依存チェーン経由
   #   判断: ローカルCLI用途のみで、攻撃者が署名処理を外部計測する経路がないため許可
   #   削除条件: nixpkgs側で警告対象外になったら（python-ecdsa更新 or 代替実装移行時）
   #   見直しタイミング: `nix flake update` 実行後にこのエントリの要否を確認
+  #   （nixpkgs更新で既定Pythonが 3.13→3.14 に上がったためバージョン名を追随）
   nixpkgs.config.permittedInsecurePackages = [
-    "python3.13-ecdsa-0.19.2"
+    "python3.14-ecdsa-0.19.2"
   ];
 
   # State Version
