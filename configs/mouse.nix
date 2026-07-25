@@ -2,6 +2,26 @@
 let
   cfgFormat = pkgs.formats.libconfig { };
   inherit (cfgFormat.lib) mkHex;
+
+  # Solaar 1.1.20 へ更新（nixpkgs 現行は 1.1.19）。
+  # 1.1.19 では Bolt レシーバ(046d:C548)配下の MX Master 4 が
+  # "Protocol: unknown (device is offline)" になり、レシーバのペアリング
+  # レジスタは読めるのにデバイス index 2 への HID++ ping が返らない。
+  # 1.1.20 の "Correctly handle timeout in Bolt discovery" が該当しうるため試す。
+  # pycairo は 1.1.20 の install_requires に追加されたので明示的に足す。
+  # 解除条件: nixpkgs の solaar が 1.1.20 以降になったら override を削除。
+  solaar = pkgs.solaar.overridePythonAttrs (old: rec {
+    version = "1.1.20";
+    src = pkgs.fetchFromGitHub {
+      owner = "pwr-Solaar";
+      repo = "Solaar";
+      tag = version;
+      hash = "sha256-h/uiy0TtMicKch2cdXHur5DkvQun2sAw2HpFI7Qstqg=";
+    };
+    propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [
+      pkgs.python3Packages.pycairo
+    ];
+  });
 in
 {
   # Bluetooth 接続だと起動時(graphical.target)に logid が先に立ち上がり、まだ HID++
@@ -18,14 +38,20 @@ in
   # 使うため Solaar へ一本化する方針。Phase 1 では CLI 検証のみ行うため logiops は残す。
   #
   # hardware.logitech.wireless モジュールは使わない: Unifying レシーバ用の ltunify を
-  # 巻き込むが、本機は Bluetooth 接続で不要なため、必要な 2 つだけを明示的に入れる。
+  # 巻き込むが不要なため、必要な 2 つだけを明示的に入れる。
   #
   # Phase 2 で rules.yaml によるボタン/ジェスチャー移植、Phase 3 で logiops 撤去。
-  environment.systemPackages = [ pkgs.solaar ];
+  environment.systemPackages = [ solaar ];
 
-  # 非 root の solaar から hidraw / HID++ デバイスへアクセスするための udev ルール。
-  # solaar 本体とは別派生に分離されている（pkgs.solaar.udev の再エクスポート）。
-  services.udev.packages = [ pkgs.logitech-udev-rules ];
+  # 非 root の solaar から hidraw / HID++ デバイスへアクセスするための udev ルール
+  # （TAG+="uaccess" で ACL 付与）。solaar 本体とは別 output に分離されている。
+  # pkgs.logitech-udev-rules ではなく上書き版の udev output を使い、本体と版を揃える。
+  services.udev.packages = [ solaar.udev ];
+
+  # Solaar のルール（KeyPress 等）は /dev/uinput へ書き込んで入力を合成するため必須。
+  # solaar の udev ルールにも uinput の uaccess 指定はあるが、モジュールのロードと
+  # グループ整備はこのオプションが行う。
+  hardware.uinput.enable = true;
 
   # Logitech MX Master シリーズ（Bluetooth 接続）のボタンカスタマイズ。
   # MX Master 3 と MX Master 4 は標準ボタン（進む/戻る/ホイール切替/ジェスチャー系）の

@@ -96,6 +96,9 @@
     extraGroups = [
       "networkmanager"
       "wheel"
+      # Solaar のルールが /dev/uinput へ入力を合成するため。
+      # hardware.uinput.enable（configs/mouse.nix）が GROUP="uinput" を設定する。
+      "uinput"
     ];
   };
 
