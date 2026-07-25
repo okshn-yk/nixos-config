@@ -32,24 +32,59 @@ let
     text = ''
       dev="MX Master 4"
 
+      # 選択肢型の設定は必ず「名前」で指定すること。
+      # solaar の select_choice() は裸の整数を渡すと choices[N-1] を引くが、
+      # NamedInts の [] は添字ではなく「値」による参照なので、N を渡すと
+      # 値 N-1 の選択肢が選ばれて 1 つずれる（Diverted のつもりが Regular 等）。
+      # 名前での完全一致が最優先で評価されるため、名前指定なら曖昧さがない。
       echo "Applying Solaar settings to '$dev' ..."
 
       # ボタンの diversion（これが無いとルールは一切発火しない）
-      solaar config "$dev" divert-keys 'Back Button' 1
-      solaar config "$dev" divert-keys 'Forward Button' 1
-      solaar config "$dev" divert-keys 'Smart Shift' 1
-      solaar config "$dev" divert-keys 'Mouse Gesture Button' 2
-      solaar config "$dev" divert-keys 'Haptic' 2
+      solaar config "$dev" divert-keys 'Back Button' 'Diverted'
+      solaar config "$dev" divert-keys 'Forward Button' 'Diverted'
+      solaar config "$dev" divert-keys 'Smart Shift' 'Diverted'
+      solaar config "$dev" divert-keys 'Mouse Gesture Button' 'Mouse Gestures'
+      solaar config "$dev" divert-keys 'Haptic' 'Mouse Gestures'
 
-      # 旧 logiops 相当のデバイス設定
+      # 旧 logiops 相当のデバイス設定。
+      # scroll-ratchet は smart-shift より先に設定すること: Freespinning のままだと
+      # smart-shift の read() が常に MIN_VALUE(1) を返し、検証が通らない。
       solaar config "$dev" dpi 1500
-      solaar config "$dev" scroll-ratchet 2 # 2=Ratcheted / 1=Freespinning
+      solaar config "$dev" scroll-ratchet 'Ratcheted'
       solaar config "$dev" smart-shift 30 # ラチェット速度（旧 logiops threshold）
       solaar config "$dev" scroll-ratchet-torque 50
       solaar config "$dev" hires-smooth-resolution false
 
-      echo "Done. Current settings:"
-      solaar config "$dev"
+      # --- 検証: 意図した値になっているか読み戻して確認する ---
+      # 値の指定方法を間違えると黙って別の値が入るため、必ず突き合わせる。
+      echo
+      echo "Verifying ..."
+      actual=$(solaar config "$dev" 2>/dev/null)
+      failed=0
+
+      check() {
+        if grep -qF "$1" <<<"$actual"; then
+          echo "  OK   $1"
+        else
+          echo "  FAIL $1"
+          echo "       actual: $(grep -E "^''${1%% =*} =" <<<"$actual" || echo '(not found)')"
+          failed=1
+        fi
+      }
+
+      check "divert-keys = {Middle Button:Regular, Back Button:Diverted, Forward Button:Diverted, Mouse Gesture Button:Mouse Gestures, Smart Shift:Diverted, Haptic:Mouse Gestures}"
+      check "dpi = 1500"
+      check "scroll-ratchet = Ratcheted"
+      check "smart-shift = 30"
+      check "scroll-ratchet-torque = 50"
+      check "hires-smooth-resolution = False"
+
+      echo
+      if [ "$failed" -ne 0 ]; then
+        echo "!! 一部の設定が意図した値になっていません。上の FAIL を確認してください。"
+        exit 1
+      fi
+      echo "全ての設定が意図どおり適用されました。"
     '';
   };
 

@@ -129,6 +129,19 @@
                   propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [
                     final.python3Packages.pycairo
                   ];
+                  # libnotify を足して gi.require_version("Notify", "0.7") を満たす。
+                  # 無いと solaar の実行ごとに
+                  # "Notification service is not available: Namespace Notify not available"
+                  # が出力される（wrapGAppsHook3 が buildInputs の typelib を拾う）。
+                  buildInputs = (old.buildInputs or [ ]) ++ [ final.libnotify ];
+                  # libnotify を入れると通知テストが skip されず実際に走るが、
+                  # ビルドサンドボックスには通知デーモンが無いため
+                  # 'NoneType' object has no attribute 'get_search_path' で失敗する。
+                  # 環境依存の失敗なのでこのファイルのみ除外する（他 758 件は通る）。
+                  disabledTestPaths = (old.disabledTestPaths or [ ]) ++ [
+                    "tests/solaar/ui/test_desktop_notifications.py"
+                    "tests/logitech_receiver/test_desktop_notifications.py"
+                  ];
                 });
               })
             ];
