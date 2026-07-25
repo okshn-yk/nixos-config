@@ -1,5 +1,4 @@
 {
-  config,
   pkgs,
   lib,
   username,
@@ -29,6 +28,13 @@
   # Bootloader
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  # ESP は 1GB しかないため、世代が増えてもブートエントリで溢れさせない上限。
+  # 実際は週次 GC で世代が抑えられているが、GC が止まった場合の保険。
+  boot.loader.systemd-boot.configurationLimit = 10;
+
+  # 起動時に /tmp を掃除し、前回セッションの残骸を持ち越さない
+  boot.tmp.cleanOnBoot = true;
+
   # AMD 固有のカーネルパラメータ（amd_pstate 等）は configs/hardware-amd.nix に分離した。
 
   hardware.graphics.enable = true;
@@ -48,6 +54,10 @@
     dates = "weekly";
     options = "--delete-older-than 7d";
   };
+  # ストア内の重複ファイルをハードリンク化してディスクを節約する。
+  # GC が「不要な世代を消す」のに対し、こちらは「残す世代の中身を重複排除する」
+  # 役割で、両者は補完関係。ルートは 438G 中 203G 使用のため効果が見込める。
+  nix.optimise.automatic = true;
 
   # 非フリーパッケージ許可（ホワイトリスト方式）
   nixpkgs.config.allowUnfreePredicate =
@@ -129,6 +139,12 @@
     "d /opt/google/chrome 0755 root root -"
     "L+ /opt/google/chrome/chrome - - - - ${pkgs.google-chrome}/bin/google-chrome-stable"
   ];
+
+  # --- GPaste (GNOME 用クリップボードマネージャ) ---
+  # これまで hm/apps.nix で systemd user unit を手書きして起動していたが、
+  # 上流オプションが D-Bus activation と gsettings schema まで面倒を見るため置き換えた。
+  # キーバインド（履歴呼び出し）は hm/apps.nix の dconf 側に残る。
+  programs.gpaste.enable = true;
 
   # --- Locate (ファイル検索高速化) ---
   # 毎日DBを更新し、locateコマンドで瞬時検索

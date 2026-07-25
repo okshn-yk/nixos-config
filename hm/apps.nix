@@ -1,5 +1,27 @@
-{ pkgs, ... }:
+{
+  pkgs,
+  inputs,
+  system,
+  ...
+}:
 
+let
+  # checkov ピン留め（専用 input nixpkgs-checkov から取得）。
+  # 2026-07-23 以降の nixpkgs では依存の pycep-parser / policy-sentry が
+  # pythonMetadataCheckPhase の版数一致チェックに失敗しビルド不能（派生の
+  # version と wheel の .dist-info/METADATA の version が食い違う nixpkgs 側の回帰）。
+  # 直前の正常なリビジョン（2026-07-19）に固定する。
+  # 消費者がこのファイルだけなので、グローバル overlay ではなく利用箇所で解決する。
+  # 別 nixpkgs の独立評価なので configuration.nix の nixpkgs.config は届かない。
+  # permittedInsecurePackages を同じ内容でここにも明示する必要がある。
+  # 解除条件: 上流で版数不整合が修正されたら、この let と flake.nix の
+  # nixpkgs-checkov input を削除して pkgs.checkov に戻す。
+  checkovPinned =
+    (import inputs.nixpkgs-checkov {
+      inherit system;
+      config.permittedInsecurePackages = [ "python3.14-ecdsa-0.19.2" ];
+    }).checkov;
+in
 {
   # ===========================================================================
   # Packages & GNOME Integration
@@ -28,7 +50,8 @@
     # メタデータの上限が保守的なだけなので、ランタイム依存チェックのみ無効化。
     # 解除条件: nixpkgs側で checkov が aiohttp 3.14 を許可したら override を削除。
     # 見直し: `nix flake update` 後にこの override の要否を確認。
-    (checkov.overridePythonAttrs (_: {
+    # ※ ピン留め（上の checkovPinned）とは別問題なので、要否は個別に判断する。
+    (checkovPinned.overridePythonAttrs (_: {
       dontCheckRuntimeDeps = true;
     })) # IaC セキュリティスキャン（Terraform, Dockerfile等）
     trivy # コンテナ・ファイルシステム脆弱性スキャン
@@ -43,25 +66,21 @@
     google-chrome # Playwright MCP が依存（削除不可）
     gnomeExtensions.appindicator
 
-    # Clipboard Manager
-    gpaste # GNOMEネイティブのクリップボードマネージャー
+    # クリップボードマネージャ（GPaste）はシステム側の programs.gpaste.enable
+    # （configuration.nix）で入る。本体・D-Bus activation・gsettings schema を
+    # 上流オプションがまとめて面倒みるため、ここでは何も入れない。
   ];
 
-  # GPasteデーモン自動起動
-  systemd.user.services.gpaste = {
-    Unit = {
-      Description = "GPaste clipboard manager daemon";
-      After = [ "graphical-session.target" ];
-      PartOf = [ "graphical-session.target" ];
-    };
-    Service = {
-      ExecStart = "${pkgs.gpaste}/libexec/gpaste/gpaste-daemon";
-      Restart = "on-failure";
-    };
-    Install = {
-      WantedBy = [ "graphical-session.target" ];
-    };
-  };
+  # GPaste デーモンをログイン時から常駐させる。
+  # gpaste パッケージは user unit (Type=dbus, BusName=org.gnome.GPaste) を同梱し、
+  # programs.gpaste.enable がそれを /etc/systemd/user へ配置するが、NixOS は
+  # user unit の [Install] を自動で有効化しない。そのため D-Bus activation 頼みになり、
+  # 最初に Super+V を押すまでデーモンが起動せず、それ以前のコピーが履歴に残らない。
+  # 上流の unit をそのまま graphical-session.target から要求することで、
+  # ExecStart 等を自前で書き写さずにログイン時起動へ戻す
+  # （= systemctl --user enable 相当を宣言的に行う）。
+  xdg.configFile."systemd/user/graphical-session.target.wants/org.gnome.GPaste.service".source =
+    "${pkgs.gpaste}/etc/systemd/user/org.gnome.GPaste.service";
 
   # GNOME dconf設定
   dconf.settings = {
@@ -102,7 +121,10 @@
       power-button-action = "hibernate";
     };
 
-    # GPasteショートカット
+    # GPasteショートカット（Super+V で履歴 UI を開く）
+    # デーモンは NixOS 側の programs.gpaste.enable（configuration.nix）が
+    # D-Bus activation で供給する。ここはキーバインドの定義のみ。
+    # command は store パス直指定なので PATH に依存しない。
     "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0" = {
       name = "GPaste Toggle";
       command = "${pkgs.gpaste}/libexec/gpaste/gpaste-ui";

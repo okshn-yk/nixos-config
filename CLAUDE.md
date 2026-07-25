@@ -25,6 +25,9 @@ nix fmt
 
 # パッケージ/オプション検索
 nix-search <クエリ>
+
+# このリポジトリ編集用の開発環境（nixfmt, nixd, nix-search-cli）
+nix develop
 ```
 
 ## アーキテクチャ
@@ -42,6 +45,7 @@ nix-search <クエリ>
 | `desktop.nix`    | GNOME、Pipewire オーディオ、フォント（HackGen, Noto CJK）、Fcitx5+Mozc IME |
 | `dev-env.nix`    | Podman、nix-ld（VSCode Server 互換）、基本開発ツール                       |
 | `keymap.nix`     | xremap キーリマップ（カスタム「Onishi Layout」）                           |
+| `hardware-amd.nix` | AMD 固有のカーネルパラメータ（`amd_pstate`, `mem_sleep_default`）。Intel 機へ移行する際は import を外す |
 | `laptop.nix`     | ラップトップ固有のハードウェア設定                                         |
 | `wifi.nix`       | ネットワーク設定                                                           |
 | `aws-config.nix` | AWS SSO 設定                                                               |
@@ -54,7 +58,7 @@ nix-search <クエリ>
 
 | ファイル        | 内容                                                                                                |
 | --------------- | --------------------------------------------------------------------------------------------------- |
-| `apps.nix`      | パッケージ（言語、ビルドツール、GUI アプリ）、GPaste、dconf、Fcitx5                                 |
+| `apps.nix`      | パッケージ（言語、ビルドツール、GUI アプリ、checkov のピン留め）、GPaste のキーバインドと常駐設定、dconf、Fcitx5 |
 | `terminal.nix`  | Ghostty、Zellij、tmux 設定                                                                          |
 | `browser.nix`   | Firefox / Floorp 設定（プロファイル、ポリシー。既定は Floorp）                                      |
 | `shell.nix`     | Bash 設定、エイリアス、Starship、zoxide、eza、fzf、bat、ble.sh                                      |
@@ -77,19 +81,21 @@ sops-nix と age 暗号化を使用。`secrets.yaml`に保存し、SSH ホスト
 各エントリには CVE 番号 / 引き込み元 / 許可した理由 / 削除条件 をインラインコメントで明記する。
 `nix flake update` 後はこのリストの要否を見直す。
 
-**⚠️ 許可リストは 2 箇所にある**: ピン留め用の別 nixpkgs を `import` する overlay
-（`flake.nix` の checkov overlay）は独立評価のため `configuration.nix` の
-`nixpkgs.config` が届かず、同じ内容を overlay 内にも書いている。
+**⚠️ 許可リストは 2 箇所にある**: ピン留め用の別 nixpkgs を `import` する箇所
+（`hm/apps.nix` の `checkovPinned`）は独立評価のため `configuration.nix` の
+`nixpkgs.config` が届かず、同じ内容をその `let` 束縛にも書いている。
 エントリの追加・削除・**バージョン文字列の追随**（既定 Python の版上がり等）は
 必ず両方に反映する。片方だけ直すとビルド不能または不要な insecure 許可の残存になる。
 ピン留めを解除すれば重複も解消する。
 
 ### パッケージのピン留め
 
-回帰を含むパッケージは `flake.nix` で正常版にピン留めする。各ピンには引き込み元 / 理由 / 解除条件をコメントで明記し、`nix flake update` 後に解除可否を見直す。
+回帰を含むパッケージは正常版にピン留めする。各ピンには引き込み元 / 理由 / 解除条件をコメントで明記し、`nix flake update` 後に解除可否を見直す。
+
+ピン留めの置き場所は消費者の広さで決める。複数モジュールから参照するもの（Solaar）は `flake.nix` の overlay、単一ファイルからしか使わないもの（checkov）は利用箇所の `let` 束縛に置き、システム全体の overlay を増やさない。
 
 - **blesh**: ~~ピン留め中~~ → **2026-07-25 に解除済み**。`0.4.0-devel4+6cffa91`（2026-06-21 nightly）の回帰で Ghostty で文字入力不能になっていたが、nixpkgs が別コミット（`d69e4d5`, 2026-07-11）へ前進したため解除。**再発時の再ピン留め手順は `docs/blesh-pin.md` 参照**。blesh が上がった際は Ghostty で新規ターミナルを開いて入力確認すること。
-- **checkov**: nixpkgs `e2587ca`（2026-07-23）以降で依存の `pycep-parser` / `policy-sentry` が `pythonMetadataCheckPhase` の版数一致チェックに失敗しビルド不能（派生の version と wheel の METADATA の version が食い違う nixpkgs 側の回帰）。専用 input `nixpkgs-checkov` 経由で `241313f`（2026-07-19）に固定。解除確認は下記コマンド参照。
+- **checkov**: nixpkgs `e2587ca`（2026-07-23）以降で依存の `pycep-parser` / `policy-sentry` が `pythonMetadataCheckPhase` の版数一致チェックに失敗しビルド不能（派生の version と wheel の METADATA の version が食い違う nixpkgs 側の回帰）。専用 input `nixpkgs-checkov` 経由で `241313f`（2026-07-19）に固定し、`hm/apps.nix` の `checkovPinned` で直接 import している（消費者がこのファイルのみのため overlay にはしない）。解除確認は下記コマンド参照。
   - checkov には**ピン留めとは別に** `hm/apps.nix` で `dontCheckRuntimeDeps` の override も乗っている（`aiohttp<3.14.0` 上限 vs nixpkgs の 3.14.1）。**2 段構えなので、ピンを外しても override は別途要否を判断する**。
 
 ピン解除可否の確認（`nix flake update` 後に実行）:
@@ -116,7 +122,7 @@ nix build --no-link --impure --expr 'let p = import (builtins.getFlake "github:n
 
 ### エイリアス・キーバインド
 
-- `update-claude` - claude-code-nix を更新してリビルド
+- `update-claude` / `update-codex` - 各 flake 入力を更新してリビルド（実体は共通関数 `_update_flake_input`）。失敗時の巻き戻しが他の入力の更新を壊さないよう、`flake.lock` に未コミット変更があると実行を拒否する
 - `adev` / `aadm` - AWS SSO ログインショートカット
 - `ls`, `ll`, `la`, `tree` - eza 版（アイコン/git 連携付き）
 - `Ctrl+g` - ghq+fzf でリポジトリ選択・移動

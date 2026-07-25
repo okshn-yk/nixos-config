@@ -11,9 +11,9 @@
     # 版数一致チェックに失敗しビルド不能（派生の version と wheel の
     # .dist-info/METADATA の version が食い違う、nixpkgs 側の回帰）。
     # 直前の正常なリビジョン（2026-07-19、稼働中システムと同一）に固定する。
-    # 利用箇所: 下の nixpkgs.overlays（checkov 差し替え）。
+    # 利用箇所: hm/apps.nix（checkov をこの nixpkgs から直接取得）。
     # 解除条件: 上流 nixpkgs で当該版数不整合が修正されたら、この input と
-    # overlay を削除して通常の nixpkgs の checkov に戻す。
+    # hm/apps.nix の let 束縛を削除して通常の nixpkgs の checkov に戻す。
     nixpkgs-checkov.url = "github:nixos/nixpkgs/241313f4e8e508cb9b13278c2b0fa25b9ca27163";
 
     # Home Manager設定
@@ -58,7 +58,6 @@
     {
       self,
       nixpkgs,
-      nixpkgs-checkov,
       home-manager,
       xremap-flake,
       sops-nix,
@@ -90,23 +89,9 @@
           ./configuration.nix
 
           # システム全体でrust-binを使用可能に
-          ({ pkgs, ... }: {
+          ({ ... }: {
             nixpkgs.overlays = [
               rust-overlay.overlays.default
-
-              # checkov ピン留め: 上の nixpkgs-checkov input 参照。
-              # 新しい nixpkgs での pycep-parser / policy-sentry の版数不整合
-              # 回帰でビルド不能になるのを回避するため、既知の正常版 nixpkgs の
-              # checkov に固定する。解除条件は input のコメントを参照。
-              # permittedInsecurePackages は configuration.nix と同じ内容を
-              # ここでも明示（別 nixpkgs 評価のため設定が引き継がれない）。
-              (final: prev: {
-                checkov =
-                  (import nixpkgs-checkov {
-                    inherit system;
-                    config.permittedInsecurePackages = [ "python3.14-ecdsa-0.19.2" ];
-                  }).checkov;
-              })
 
               # Solaar 1.1.20 へ更新（nixpkgs 現行は 1.1.19）。
               # 1.1.19 では Bolt レシーバ(046d:C548)配下の MX Master 4 が
@@ -176,6 +161,17 @@
 
       # `nix fmt` で使われるフォーマッタを公開
       formatter.${system} = pkgs.nixfmt;
+
+      # `nix develop` でこのリポジトリの編集に必要なツールを揃える。
+      # 常用ツールは home-manager 側にも入っているが、他ホストや素の環境でも
+      # 同じ道具立てで作業できるようにする。
+      devShells.${system}.default = pkgs.mkShell {
+        packages = with pkgs; [
+          nixfmt
+          nixd
+          nix-search-cli
+        ];
+      };
 
       # `nix flake check` に整形チェックを追加。未整形ファイルがあると失敗する。
       checks.${system}.nixfmt = pkgs.runCommand "nixfmt-check" { nativeBuildInputs = [ pkgs.nixfmt ]; } ''

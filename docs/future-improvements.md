@@ -33,21 +33,6 @@ home.packages = with pkgs; [
 
 ---
 
-## Flake 改善
-
-### devShells
-
-**課題**: このリポジトリで作業する際の開発環境が未定義
-**解決**: `nix develop`で必要なツール（nixfmt, nixd 等）が即座に使える
-
-```nix
-devShells.x86_64-linux.default = pkgs.mkShell {
-  packages = with pkgs; [ nixfmt-rfc-style nixd ];
-};
-```
-
----
-
 ## 実装時のファイル構成
 
 **新規作成予定**
@@ -57,5 +42,4 @@ devShells.x86_64-linux.default = pkgs.mkShell {
 **更新予定**
 
 - `home.nix` - imports 追加
-- `flake.nix` - devShells 追加
 - `hm/git.nix` - delta 統合

@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   # ローカルLLM（Ollama）— Zed のインライン補完（edit prediction）バックエンド

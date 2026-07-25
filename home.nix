@@ -1,6 +1,4 @@
 {
-  config,
-  pkgs,
   username,
   ...
 }:
@@ -28,8 +26,9 @@
 
   # 環境変数 (全体に関わるもの)
   # 既定ブラウザは Floorp に統一（autostart / xdg.mimeApps と一致させる）
+  # EDITOR は configs/dev-env.nix の environment.variables に一本化した
+  # （システム側なら root や TTY ログインにも効くため、ここでは定義しない）。
   home.sessionVariables = {
-    EDITOR = "vim";
     BROWSER = "floorp";
     DEFAULT_BROWSER = "floorp";
   };
