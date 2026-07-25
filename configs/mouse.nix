@@ -12,6 +12,21 @@ in
     ACTION=="add", SUBSYSTEM=="hidraw", DRIVERS=="logitech-hidpp-device", RUN+="${pkgs.systemd}/bin/systemctl --no-block restart logid.service"
   '';
 
+  # === Solaar 移行 Phase 1（logiops と併存中）===
+  # logiops は 2024-09-28 の v0.3.5 以降コード更新が無く（以後のコミットは docs のみ）、
+  # 触覚フィードバック(HID++ feature HAPTIC 0x19B0)も未実装。MX Master 4 の触覚を
+  # 使うため Solaar へ一本化する方針。Phase 1 では CLI 検証のみ行うため logiops は残す。
+  #
+  # hardware.logitech.wireless モジュールは使わない: Unifying レシーバ用の ltunify を
+  # 巻き込むが、本機は Bluetooth 接続で不要なため、必要な 2 つだけを明示的に入れる。
+  #
+  # Phase 2 で rules.yaml によるボタン/ジェスチャー移植、Phase 3 で logiops 撤去。
+  environment.systemPackages = [ pkgs.solaar ];
+
+  # 非 root の solaar から hidraw / HID++ デバイスへアクセスするための udev ルール。
+  # solaar 本体とは別派生に分離されている（pkgs.solaar.udev の再エクスポート）。
+  services.udev.packages = [ pkgs.logitech-udev-rules ];
+
   # Logitech MX Master シリーズ（Bluetooth 接続）のボタンカスタマイズ。
   # MX Master 3 と MX Master 4 は標準ボタン（進む/戻る/ホイール切替/ジェスチャー系）の
   # CID を共有しているため、共通設定を両デバイスに適用する。
