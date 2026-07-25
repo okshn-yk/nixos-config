@@ -126,8 +126,10 @@ in
   home.activation.claudeMcpConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     CLAUDE_JSON="$HOME/.claude.json"
 
-    # 新規環境では ~/.claude.json が無いため、空の JSON を作ってから設定を流し込む。
-    if [ ! -f "$CLAUDE_JSON" ]; then
+    # 新規環境では ~/.claude.json が無く、また壊れた JSON だと後段の jq が失敗して
+    # activation 全体（set -e）が落ちる。妥当性を検証して駄目なら作り直す
+    # （ファイルが無いケースもこの検証で一緒に吸収できる）。
+    if ! ${pkgs.jq}/bin/jq -e . "$CLAUDE_JSON" >/dev/null 2>&1; then
       echo '{}' > "$CLAUDE_JSON"
     fi
 
@@ -144,8 +146,9 @@ in
     # .claudeディレクトリが存在しない場合は作成
     mkdir -p "$HOME/.claude"
 
-    # settings.jsonが存在しない場合は空のJSONオブジェクトを作成
-    if [ ! -f "$SETTINGS_FILE" ]; then
+    # 壊れた JSON だと後段の jq が失敗し activation 全体（set -e）が落ちるため、
+    # 妥当性を検証して駄目なら作り直す（未作成のケースもこれで吸収できる）。
+    if ! ${pkgs.jq}/bin/jq -e . "$SETTINGS_FILE" >/dev/null 2>&1; then
       echo '{}' > "$SETTINGS_FILE"
     fi
 

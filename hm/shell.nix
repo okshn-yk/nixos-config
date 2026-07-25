@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   # CLI Tools Package
@@ -23,7 +23,8 @@
       adev = "export AWS_PROFILE=dev && aws sso login";
       aadm = "export AWS_PROFILE=admin && aws sso login";
       aprd = "export AWS_PROFILE=prd && aws sso login";
-      # update-claude は関数として initExtra 側で定義（検証→コミットの安全な順序のため）
+      # update-claude / update-codex は関数として initExtra 側で定義
+      # （検証→コミットの安全な順序と dirty ガードが必要なため）
     };
     initExtra = ''
       # ble.sh 初期化（最初に読み込む）
@@ -58,14 +59,22 @@
         return $exit_code
       }
 
-      # claude-code-nix を安全な順序で更新する。
+      # flake 入力を安全な順序で更新する共通処理。
       # 更新 → flake check → rebuild test（成功）→ flake.lock のみコミット → switch。
       # いずれかで失敗したら flake.lock を元に戻し、無関係な作業中変更はコミットしない。
-      update-claude() {
+      # 事前に flake.lock の未コミット変更を弾くのは、失敗時の巻き戻し
+      # (git checkout -- flake.lock) が他の入力の更新まで破棄してしまうため。
+      # 成功時の git commit -- flake.lock も同様に、無関係な入力の更新まで
+      # 巻き込んでコミットしてしまう。
+      _update_flake_input() {  # $1=入力名 $2=コミットメッセージ
         cd ~/nixos-config || return 1
-        nix flake update claude-code-nix
+        if ! git diff --quiet flake.lock; then
+          echo "❌ flake.lock に未コミットの変更があります。先にコミットするか破棄してください。"
+          return 1
+        fi
+        nix flake update "$1"
         if git diff --quiet flake.lock; then
-          echo "✅ Claude Code is already up to date."
+          echo "✅ $1 is already up to date."
           return 0
         fi
         if ! nix flake check; then
@@ -78,31 +87,13 @@
           git checkout -- flake.lock
           return 1
         fi
-        git commit -m "chore: update claude-code" -- flake.lock
+        git commit -m "$2" -- flake.lock
         sudo nixos-rebuild switch --flake .
       }
 
-      # codex-cli-nix を安全な順序で更新する（update-claude と同じ手順）。
-      update-codex() {
-        cd ~/nixos-config || return 1
-        nix flake update codex-cli-nix
-        if git diff --quiet flake.lock; then
-          echo "✅ Codex is already up to date."
-          return 0
-        fi
-        if ! nix flake check; then
-          echo "❌ flake check に失敗。flake.lock を元に戻します。"
-          git checkout -- flake.lock
-          return 1
-        fi
-        if ! sudo nixos-rebuild test --flake .; then
-          echo "❌ rebuild test に失敗。flake.lock を元に戻します。"
-          git checkout -- flake.lock
-          return 1
-        fi
-        git commit -m "chore: update codex" -- flake.lock
-        sudo nixos-rebuild switch --flake .
-      }
+      # Claude Code / Codex の更新ショートカット（中身は上の共通処理）。
+      update-claude() { _update_flake_input claude-code-nix "chore: update claude-code"; }
+      update-codex() { _update_flake_input codex-cli-nix "chore: update codex"; }
 
       # ghq + fzf連携
       function zrun_ghq_fzf() {

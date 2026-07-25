@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, ... }:
 
 {
   # WiFi Configuration via Sops
@@ -44,6 +44,13 @@
       } /etc/NetworkManager/system-connections/home-wifi.nmconnection
       chmod 600 /etc/NetworkManager/system-connections/home-wifi.nmconnection
     '';
+    serviceConfig = {
+      # Type=simple だと fork 直後に「起動完了」と見なされ、before= の順序保証が
+      # 実効を持たない（リンク作成前に NetworkManager が走りうる）。oneshot に
+      # することで「スクリプト終了まで待ってから NetworkManager を起動」になる。
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
     before = [ "NetworkManager.service" ];
     wantedBy = [ "multi-user.target" ];
   };
