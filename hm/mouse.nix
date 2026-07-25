@@ -22,8 +22,9 @@ let
   # Mouse Gesture Button と Haptic は「押しながらの移動」を取りたいので
   # Mouse Gestures(2)、残りは単純な押下を取りたいので Diverted(1)。
   #
-  # DPI と SmartShift は旧 logiops 設定と同じ値に揃える
-  # （dpi=1500 / ラチェット速度=30 / トルク=50）。
+  # DPI とトルクは旧 logiops 設定を踏襲（dpi=1500 / トルク=50）。
+  # ラチェット速度だけは旧設定の 30 では自動フリースピンに移行しなかったため
+  # 実機で詰めて 10 にしている（下の smart-shift のコメント参照）。
   # 高解像度スクロールは MX Master 4 では 1 ノッチの移動量を MX Master 3 に
   # 近づけるため無効のままにする（scroll-wheel-resolution=False）。
   applySettings = pkgs.writeShellApplication {
@@ -58,7 +59,11 @@ let
       # smart-shift の read() が常に MIN_VALUE(1) を返し、検証が通らない。
       solaar config "$dev" dpi 1500
       solaar config "$dev" scroll-ratchet 'Ratcheted'
-      solaar config "$dev" smart-shift 30 # ラチェット速度（旧 logiops threshold）
+      # smart-shift = フリースピンへ自動移行するのに必要な回転速度のしきい値。
+      # 大きいほど移行しにくい（Solaar 曰く最大値 50 では一切移行しない）。
+      # 旧 logiops の threshold=30 をそのまま持ってきていたが高すぎて自動移行せず、
+      # 実機で詰めて 10 に決定（Logi Options+ 相当の感触）。
+      solaar config "$dev" smart-shift 10
       solaar config "$dev" scroll-ratchet-torque 50
       solaar config "$dev" hires-smooth-resolution false
 
@@ -81,7 +86,7 @@ let
       }
       check "dpi = 1500"
       check "scroll-ratchet = Ratcheted"
-      check "smart-shift = 30"
+      check "smart-shift = 10"
       check "scroll-ratchet-torque = 50"
       check "hires-smooth-resolution = False"
 

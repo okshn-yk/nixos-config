@@ -1,20 +1,27 @@
-{ config, pkgs, ... }:
-let
-  cfgFormat = pkgs.formats.libconfig { };
-  inherit (cfgFormat.lib) mkHex;
+{ pkgs, ... }:
 
-in
 {
-  # === Solaar 移行 Phase 2（logiops から切り替え）===
-  # logiops は v0.3.5(2024-09-28) 以降コード更新が無く（以後のコミットは docs のみ）、
-  # MX Master 4 の触覚フィードバック(HID++ HAPTIC 0x19B0)も Action Ring の感圧ボタン
-  # (CID 0x01A0 "Haptic") も扱えない。Solaar は両方を扱えるため一本化する。
+  # ===========================================================================
+  # Logitech MX Master 4（USB Bolt レシーバ 046d:C548 接続）
   #
-  # logid と Solaar は同じレシーバの hidraw を奪い合うため併存できない。
-  # ボタン/ジェスチャーの割り当ては hm/mouse.nix の Solaar ルールへ移植済み。
+  # 設定は Solaar に一本化している。旧 logiops(logid) は v0.3.5(2024-09-28) 以降
+  # コード更新が無く（以後のコミットは docs のみ）、MX Master 4 の触覚フィードバック
+  # (HID++ HAPTIC 0x19B0) も Action Ring の感圧ボタン (CID 0x01A0 "Haptic") も
+  # 扱えないため撤去した。logid と Solaar は同じレシーバの hidraw を奪い合うので
+  # 併存もできない。
   #
-  # hardware.logitech.wireless モジュールは使わない: Unifying レシーバ用の ltunify を
-  # 巻き込むが不要なため、必要なものだけを明示的に入れる。
+  # ボタン割り当て・ジェスチャー・DPI 等の実際の設定は hm/mouse.nix にある。
+  #
+  # 既知のハード事情: このレシーバ 046d:C548 は kernel 6.18.39 の hid-logitech-dj の
+  # ID 表に無く（modules.alias の登録は hid_multitouch のみ）、hid-generic /
+  # hid-multitouch が bind される。そのためレシーバは DJ モードに入らず、ペアリング
+  # 済みデバイスごとの hidraw ノードも作られない（solaar show の Device path が None）。
+  # Solaar は hidraw を直接叩くので実害は無いが、`DRIVERS=="logitech-hidpp-device"`
+  # を条件にする udev ルールは発火しない点に注意。
+  # ===========================================================================
+
+  # Solaar 本体。hardware.logitech.wireless モジュールは使わない:
+  # Unifying レシーバ用の ltunify を巻き込むが不要なため、必要なものだけを明示する。
   environment.systemPackages = [ pkgs.solaar ];
 
   # 非 root の solaar から hidraw / HID++ デバイスへアクセスするための udev ルール
@@ -24,171 +31,7 @@ in
 
   # Solaar のルール（KeyPress 等）は /dev/uinput へ書き込んで入力を合成するため必須。
   # solaar の udev ルールにも uinput の uaccess 指定はあるが、モジュールのロードと
-  # グループ整備はこのオプションが行う。
+  # グループ整備はこのオプションが行う（ユーザーの uinput グループ所属は
+  # configuration.nix 側で設定）。
   hardware.uinput.enable = true;
-
-  # --- 以下は旧 logiops 設定（無効化済み・Phase 3 で削除予定）---
-  # Solaar と logid はレシーバの hidraw を奪い合うため、enable = false で停止させる。
-  # Solaar 側の動作が安定するまでは切り戻せるよう設定本体を残しておく。
-  # 切り戻す場合は enable = true に戻し、hm/mouse.nix の Solaar サービスを止める。
-  #
-  # 旧 udev ルール（削除済み）についての記録:
-  #   ACTION=="add", SUBSYSTEM=="hidraw", DRIVERS=="logitech-hidpp-device", RUN+=...
-  #   で logid を再起動していたが、実機のレシーバ 046d:C548 は kernel 6.18.39 の
-  #   hid-logitech-dj の ID 表に無く hid-generic/hid-multitouch が bind されるため、
-  #   この条件は元から発火していなかった（コメントの「Bluetooth 接続」も誤りで、
-  #   実際は USB Bolt レシーバ接続）。
-  services.logiops =
-    let
-      # --- 両機種共通の挙動 ---
-      commonDeviceSettings = {
-        # --- DPI（カーソル速度）---
-        dpi = 1500; # 200〜4000。お好みで調整
-
-        # --- SmartShift（ラチェット/フリースピン自動切替）---
-        smartshift = {
-          on = true;
-          threshold = 30; # 値が小さいほど軽い力でフリースピンへ移行
-          torque = 50;
-        };
-
-        # --- 高解像度スクロール ---
-        hiresscroll = {
-          hires = true;
-          invert = false;
-          target = false;
-        };
-
-        buttons = [
-          # 進む（親指・前側）→ Ctrl+R
-          {
-            cid = mkHex "0x56";
-            action = {
-              type = "Keypress";
-              keys = [
-                "KEY_LEFTCTRL"
-                "KEY_R"
-              ];
-            };
-          }
-          # 戻る（親指・後側）
-          {
-            cid = mkHex "0x53";
-            action = {
-              type = "Keypress";
-              keys = [ "KEY_BACK" ];
-            };
-          }
-          # ホイール切り替えスイッチ（ホイール後ろ）→ Ctrl+W
-          {
-            cid = mkHex "0xc4";
-            action = {
-              type = "Keypress";
-              keys = [
-                "KEY_LEFTCTRL"
-                "KEY_W"
-              ];
-            };
-          }
-          # ジェスチャーボタン（親指の大きなボタン）。
-          # MX Master 4 では同位置が Action Ring になるが、まずは同じ CID 0xc3 /
-          # 同じ Gestures 設定を流用し、実機で動作するか確認する。
-          {
-            cid = mkHex "0xc3";
-            action = {
-              type = "Gestures";
-              gestures = [
-                # 押すだけ（動かさない）: GNOME アクティビティ画面
-                {
-                  direction = "None";
-                  mode = "OnRelease";
-                  action = {
-                    type = "Keypress";
-                    keys = [ "KEY_LEFTMETA" ];
-                  };
-                }
-                # 上: ウィンドウ最大化
-                {
-                  direction = "Up";
-                  mode = "OnRelease";
-                  action = {
-                    type = "Keypress";
-                    keys = [
-                      "KEY_LEFTMETA"
-                      "KEY_UP"
-                    ];
-                  };
-                }
-                # 下: 最小化 / 復帰
-                {
-                  direction = "Down";
-                  mode = "OnRelease";
-                  action = {
-                    type = "Keypress";
-                    keys = [
-                      "KEY_LEFTMETA"
-                      "KEY_DOWN"
-                    ];
-                  };
-                }
-                # 左: 前のワークスペース
-                {
-                  direction = "Left";
-                  mode = "OnRelease";
-                  action = {
-                    type = "Keypress";
-                    keys = [
-                      "KEY_LEFTMETA"
-                      "KEY_PAGEUP"
-                    ];
-                  };
-                }
-                # 右: 次のワークスペース
-                {
-                  direction = "Right";
-                  mode = "OnRelease";
-                  action = {
-                    type = "Keypress";
-                    keys = [
-                      "KEY_LEFTMETA"
-                      "KEY_PAGEDOWN"
-                    ];
-                  };
-                }
-              ];
-            };
-          }
-        ];
-      };
-
-      # `sudo logid -v` / journalctl -u logid.service で確認した実機の認識名。
-      devices = [
-        # MX Master 3 は従来どおり高解像度スクロールを使用する。
-        (
-          commonDeviceSettings
-          // {
-            name = "Wireless Mouse MX Master 3";
-          }
-        )
-
-        # MX Master 4 は1ノッチ当たりの移動量をMX Master 3へ近づけるため、
-        # 高解像度スクロールを無効化して通常のホイールイベントを使用する。
-        (
-          commonDeviceSettings
-          // {
-            name = "MX Master 4";
-            hiresscroll = commonDeviceSettings.hiresscroll // {
-              hires = false;
-            };
-          }
-        )
-      ];
-    in
-    {
-      # Solaar へ移行したため無効化（Phase 3 でこのブロックごと削除する）
-      enable = false;
-      config = {
-        inherit devices;
-      };
-    };
 }

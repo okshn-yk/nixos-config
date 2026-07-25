@@ -46,7 +46,7 @@ nix-search <クエリ>
 | `wifi.nix`       | ネットワーク設定                                                           |
 | `aws-config.nix` | AWS SSO 設定                                                               |
 | `ollama.nix`     | ローカルLLM（Ollama, Vulkan で iGPU オフロード）。Zed インライン補完バックエンド |
-| `mouse.nix`      | マウス設定（Solaar パッケージ・udev ルール・uinput）。旧 logiops 設定は無効化して残置 |
+| `mouse.nix`      | マウス設定（Solaar パッケージ・udev ルール・uinput）。logiops から Solaar へ一本化済み |
 | `performance.nix`| zram, earlyoom, swappiness 等のパフォーマンス調整                          |
 | `security.nix`   | Firewall、Avahi 無効化等のセキュリティ設定                                  |
 
