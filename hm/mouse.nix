@@ -31,6 +31,13 @@ let
     runtimeInputs = [ pkgs.solaar ];
     text = ''
       dev="MX Master 4"
+      conf="''${XDG_CONFIG_HOME:-$HOME/.config}/solaar/config.yaml"
+
+      # デーモンが動いたまま CLI がレシーバを触ると競合しうるうえ、
+      # 設定はデーモンの起動時／デバイス接続時に config.yaml から読み込まれるため、
+      # 「止める → 設定 → 検証 → 起動」の順で行う。
+      echo "Stopping solaar daemon ..."
+      systemctl --user stop solaar.service || true
 
       # 選択肢型の設定は必ず「名前」で指定すること。
       # solaar の select_choice() は裸の整数を渡すと choices[N-1] を引くが、
@@ -55,13 +62,14 @@ let
       solaar config "$dev" scroll-ratchet-torque 50
       solaar config "$dev" hires-smooth-resolution false
 
-      # --- 検証: 意図した値になっているか読み戻して確認する ---
+      # --- 検証 ---
       # 値の指定方法を間違えると黙って別の値が入るため、必ず突き合わせる。
       echo
       echo "Verifying ..."
-      actual=$(solaar config "$dev" 2>/dev/null)
       failed=0
 
+      # (1) デバイスから読み戻せる設定
+      actual=$(solaar config "$dev" 2>/dev/null)
       check() {
         if grep -qF "$1" <<<"$actual"; then
           echo "  OK   $1"
@@ -71,13 +79,37 @@ let
           failed=1
         fi
       }
-
-      check "divert-keys = {Middle Button:Regular, Back Button:Diverted, Forward Button:Diverted, Mouse Gesture Button:Mouse Gestures, Smart Shift:Diverted, Haptic:Mouse Gestures}"
       check "dpi = 1500"
       check "scroll-ratchet = Ratcheted"
       check "smart-shift = 30"
       check "scroll-ratchet-torque = 50"
       check "hires-smooth-resolution = False"
+
+      # (2) divert-keys は config.yaml で検証する。
+      # DivertKeys.read() はデバイスの DIVERTED フラグしか見ないため
+      # Regular(0) と Diverted(1) しか返せず、Mouse Gestures(2) は必ず
+      # Diverted に見える。「どのキーをジェスチャー起点にするか」は
+      # Solaar 側だけが持つ状態で、config.yaml が唯一の正となる。
+      dk=$(grep -oE 'divert-keys: \{[^}]*\}' "$conf" 2>/dev/null || echo "")
+      check_divert() {
+        # $1=CID $2=期待値 $3=表示名
+        if grep -qE "(\{|, )$1: $2(,|\})" <<<"$dk"; then
+          echo "  OK   divert-keys $3 ($1) = $2"
+        else
+          echo "  FAIL divert-keys $3 ($1) = $2"
+          echo "       actual: $dk"
+          failed=1
+        fi
+      }
+      check_divert 83 1 'Back Button'
+      check_divert 86 1 'Forward Button'
+      check_divert 196 1 'Smart Shift'
+      check_divert 195 2 'Mouse Gesture Button'
+      check_divert 416 2 'Haptic'
+
+      echo
+      echo "Starting solaar daemon ..."
+      systemctl --user start solaar.service
 
       echo
       if [ "$failed" -ne 0 ]; then
