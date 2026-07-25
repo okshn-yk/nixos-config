@@ -107,6 +107,30 @@
                     config.permittedInsecurePackages = [ "python3.14-ecdsa-0.19.2" ];
                   }).checkov;
               })
+
+              # Solaar 1.1.20 へ更新（nixpkgs 現行は 1.1.19）。
+              # 1.1.19 では Bolt レシーバ(046d:C548)配下の MX Master 4 が
+              # "Protocol: unknown (device is offline)" になり HID++ ping が返らない。
+              # 1.1.20 の "Correctly handle timeout in Bolt discovery" で解消することを
+              # 実機で確認済み（HID++ 4.5 として全機能を列挙できるようになった）。
+              # pycairo は 1.1.20 の install_requires に追加されたので明示的に足す。
+              # overlay に置くのは configs/mouse.nix と hm/mouse.nix の両方から
+              # 同一版を参照するため。
+              # 解除条件: nixpkgs の solaar が 1.1.20 以降になったらこの overlay を削除。
+              (final: prev: {
+                solaar = prev.solaar.overridePythonAttrs (old: rec {
+                  version = "1.1.20";
+                  src = final.fetchFromGitHub {
+                    owner = "pwr-Solaar";
+                    repo = "Solaar";
+                    tag = version;
+                    hash = "sha256-h/uiy0TtMicKch2cdXHur5DkvQun2sAw2HpFI7Qstqg=";
+                  };
+                  propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [
+                    final.python3Packages.pycairo
+                  ];
+                });
+              })
             ];
           })
 

@@ -19,6 +19,7 @@
     ./hm/autostart.nix
     ./hm/rust.nix
     ./hm/go.nix
+    ./hm/mouse.nix
   ];
 
   # 基本情報

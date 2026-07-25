@@ -3,60 +3,41 @@ let
   cfgFormat = pkgs.formats.libconfig { };
   inherit (cfgFormat.lib) mkHex;
 
-  # Solaar 1.1.20 へ更新（nixpkgs 現行は 1.1.19）。
-  # 1.1.19 では Bolt レシーバ(046d:C548)配下の MX Master 4 が
-  # "Protocol: unknown (device is offline)" になり、レシーバのペアリング
-  # レジスタは読めるのにデバイス index 2 への HID++ ping が返らない。
-  # 1.1.20 の "Correctly handle timeout in Bolt discovery" が該当しうるため試す。
-  # pycairo は 1.1.20 の install_requires に追加されたので明示的に足す。
-  # 解除条件: nixpkgs の solaar が 1.1.20 以降になったら override を削除。
-  solaar = pkgs.solaar.overridePythonAttrs (old: rec {
-    version = "1.1.20";
-    src = pkgs.fetchFromGitHub {
-      owner = "pwr-Solaar";
-      repo = "Solaar";
-      tag = version;
-      hash = "sha256-h/uiy0TtMicKch2cdXHur5DkvQun2sAw2HpFI7Qstqg=";
-    };
-    propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [
-      pkgs.python3Packages.pycairo
-    ];
-  });
 in
 {
-  # Bluetooth 接続だと起動時(graphical.target)に logid が先に立ち上がり、まだ HID++
-  # 接続が確立していないため "Failed to add device after 5 tries" で諦めてしまう。
-  # マウスが接続され logitech-hidpp-device ドライバが bind された時点で logid を
-  # 再起動し、確実に設定を適用させる（スリープ復帰後の再接続にも有効）。
-  services.udev.extraRules = ''
-    ACTION=="add", SUBSYSTEM=="hidraw", DRIVERS=="logitech-hidpp-device", RUN+="${pkgs.systemd}/bin/systemctl --no-block restart logid.service"
-  '';
-
-  # === Solaar 移行 Phase 1（logiops と併存中）===
-  # logiops は 2024-09-28 の v0.3.5 以降コード更新が無く（以後のコミットは docs のみ）、
-  # 触覚フィードバック(HID++ feature HAPTIC 0x19B0)も未実装。MX Master 4 の触覚を
-  # 使うため Solaar へ一本化する方針。Phase 1 では CLI 検証のみ行うため logiops は残す。
+  # === Solaar 移行 Phase 2（logiops から切り替え）===
+  # logiops は v0.3.5(2024-09-28) 以降コード更新が無く（以後のコミットは docs のみ）、
+  # MX Master 4 の触覚フィードバック(HID++ HAPTIC 0x19B0)も Action Ring の感圧ボタン
+  # (CID 0x01A0 "Haptic") も扱えない。Solaar は両方を扱えるため一本化する。
+  #
+  # logid と Solaar は同じレシーバの hidraw を奪い合うため併存できない。
+  # ボタン/ジェスチャーの割り当ては hm/mouse.nix の Solaar ルールへ移植済み。
   #
   # hardware.logitech.wireless モジュールは使わない: Unifying レシーバ用の ltunify を
-  # 巻き込むが不要なため、必要な 2 つだけを明示的に入れる。
-  #
-  # Phase 2 で rules.yaml によるボタン/ジェスチャー移植、Phase 3 で logiops 撤去。
-  environment.systemPackages = [ solaar ];
+  # 巻き込むが不要なため、必要なものだけを明示的に入れる。
+  environment.systemPackages = [ pkgs.solaar ];
 
   # 非 root の solaar から hidraw / HID++ デバイスへアクセスするための udev ルール
   # （TAG+="uaccess" で ACL 付与）。solaar 本体とは別 output に分離されている。
   # pkgs.logitech-udev-rules ではなく上書き版の udev output を使い、本体と版を揃える。
-  services.udev.packages = [ solaar.udev ];
+  services.udev.packages = [ pkgs.solaar.udev ];
 
   # Solaar のルール（KeyPress 等）は /dev/uinput へ書き込んで入力を合成するため必須。
   # solaar の udev ルールにも uinput の uaccess 指定はあるが、モジュールのロードと
   # グループ整備はこのオプションが行う。
   hardware.uinput.enable = true;
 
-  # Logitech MX Master シリーズ（Bluetooth 接続）のボタンカスタマイズ。
-  # MX Master 3 と MX Master 4 は標準ボタン（進む/戻る/ホイール切替/ジェスチャー系）の
-  # CID を共有しているため、共通設定を両デバイスに適用する。
-  # services.logiops が attrset を libconfig 形式へ変換し、logid.service（root）を起動する。
+  # --- 以下は旧 logiops 設定（無効化済み・Phase 3 で削除予定）---
+  # Solaar と logid はレシーバの hidraw を奪い合うため、enable = false で停止させる。
+  # Solaar 側の動作が安定するまでは切り戻せるよう設定本体を残しておく。
+  # 切り戻す場合は enable = true に戻し、hm/mouse.nix の Solaar サービスを止める。
+  #
+  # 旧 udev ルール（削除済み）についての記録:
+  #   ACTION=="add", SUBSYSTEM=="hidraw", DRIVERS=="logitech-hidpp-device", RUN+=...
+  #   で logid を再起動していたが、実機のレシーバ 046d:C548 は kernel 6.18.39 の
+  #   hid-logitech-dj の ID 表に無く hid-generic/hid-multitouch が bind されるため、
+  #   この条件は元から発火していなかった（コメントの「Bluetooth 接続」も誤りで、
+  #   実際は USB Bolt レシーバ接続）。
   services.logiops =
     let
       # --- 両機種共通の挙動 ---
@@ -204,7 +185,8 @@ in
       ];
     in
     {
-      enable = true;
+      # Solaar へ移行したため無効化（Phase 3 でこのブロックごと削除する）
+      enable = false;
       config = {
         inherit devices;
       };

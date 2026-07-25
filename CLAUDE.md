@@ -46,7 +46,7 @@ nix-search <クエリ>
 | `wifi.nix`       | ネットワーク設定                                                           |
 | `aws-config.nix` | AWS SSO 設定                                                               |
 | `ollama.nix`     | ローカルLLM（Ollama, Vulkan で iGPU オフロード）。Zed インライン補完バックエンド |
-| `mouse.nix`      | マウス／ポインタ設定                                                        |
+| `mouse.nix`      | マウス設定（Solaar パッケージ・udev ルール・uinput）。旧 logiops 設定は無効化して残置 |
 | `performance.nix`| zram, earlyoom, swappiness 等のパフォーマンス調整                          |
 | `security.nix`   | Firewall、Avahi 無効化等のセキュリティ設定                                  |
 
@@ -64,6 +64,7 @@ nix-search <クエリ>
 | `autostart.nix` | 自動起動アプリ（auto-move-windows でワークスペース割当）                                            |
 | `rust.nix`      | Rust 開発環境（rust-bin stable, cargo-edit/watch/audit/expand, bacon）                              |
 | `go.nix`        | Go 開発環境                                                                                          |
+| `mouse.nix`     | Solaar のルール（rules.yaml）とデーモン、`solaar-apply-settings`（ボタン diversion 適用） |
 | `zed.nix`       | Zed エディタ設定                                                                                     |
 
 ### シークレット管理
