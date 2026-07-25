@@ -42,6 +42,16 @@ let
   # graphical-session.target 配下に置くことで GNOME ログイン後に起動し、
   # ログアウト時に停止する。`systemctl --user status <name>` / `journalctl --user -u <name>`
   # で起動失敗とログを追跡でき、異常終了時は自動再起動する。
+  #
+  # 既知の障害モード: zed/vscode 等の単一インスタンス型アプリは、数日間の
+  # 連続稼働（特にサスペンド/レジューム跨ぎ）で GPU/Wayland コンテキストが
+  # 壊れ、既存プロセスが応答しなくなることがある。ExecStart はフォーク型
+  # ランチャで即 exit 0 するため、この種のハングは Restart=on-failure では
+  # 検知できない（プロセス自体は "起動失敗" しないため）。
+  # 症状: アイコン/CLI から起動してもウィンドウが出ない。
+  # 対処: `systemctl --user restart <name>.service`（例: zed.service）で
+  # 強制再起動する。nixos-rebuild 直後は home-manager が変更のあった
+  # unit を自動再起動するが、それでも直らない場合は上記を手動実行する。
   mkService = _name: app: {
     Unit = {
       Description = "${app.desc} (autostart)";
