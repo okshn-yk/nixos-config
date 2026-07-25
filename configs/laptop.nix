@@ -1,7 +1,27 @@
 { config, pkgs, ... }:
 
 {
-  # Laptop Hardware Tweaks (Power, Sleep & Fingerprint)
+  # Laptop Hardware Tweaks (Touchpad, Power, Sleep & Fingerprint)
+
+  # ==========================================
+  # タッチパッド: PS/2 → RMI4(SMBus) へ切り替え
+  # ==========================================
+  # 既定では psmouse が PS/2 プロトコルで駆動しており、カーネル自身が
+  # 「別バスに対応している」と警告を出していた:
+  #   psmouse serio1: synaptics: Your touchpad (PNP: LEN2073 PNP0f13) says it
+  #   can support a different bus. ... try setting psmouse.synaptics_intertouch to 1
+  # PS/2 は座標分解能・レポートレートが低く、圧力情報も出ないためパーム
+  # リジェクションとポインタ追従が甘い。RMI4 に切り替えると本来の分解能と
+  # 圧力データが得られ、libinput の加速カーブ（adaptive）も素直に効く。
+  # SMBus 側は i2c_piix4(AMD) が担当。rmi_smbus は本来 udev が自動ロード
+  # するが、psmouse の probe と競合しないよう明示的に読み込む。
+  #
+  # 万一 RMI4 化でタッチパッドが動かなくなった場合は、この 2 行を削除して
+  # rebuild すれば PS/2 に戻る（暫定回避はブートローダで
+  # psmouse.synaptics_intertouch=0 を指定）。TrackPoint は別デバイス
+  # (Elan TrackPoint on serio2) なので、切り分け中も操作手段は残る。
+  boot.kernelParams = [ "psmouse.synaptics_intertouch=1" ];
+  boot.kernelModules = [ "rmi_smbus" ];
 
   # ==========================================
   # Hibernate / Suspend-then-Hibernate
