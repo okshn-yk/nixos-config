@@ -87,16 +87,13 @@ sops-nix と age 暗号化を使用。`secrets.yaml`に保存し、SSH ホスト
 
 回帰を含むパッケージは `flake.nix` で正常版にピン留めする。各ピンには引き込み元 / 理由 / 解除条件をコメントで明記し、`nix flake update` 後に解除可否を見直す。
 
-- **blesh**: `0.4.0-devel4+6cffa91`（2026-06-21 nightly）の回帰で **Ghostty で文字入力不能**になるため、専用 input `nixpkgs-blesh` 経由で正常版（2026-03-10）に固定。経緯・解除手順は `docs/blesh-pin.md` 参照。
+- **blesh**: ~~ピン留め中~~ → **2026-07-25 に解除済み**。`0.4.0-devel4+6cffa91`（2026-06-21 nightly）の回帰で Ghostty で文字入力不能になっていたが、nixpkgs が別コミット（`d69e4d5`, 2026-07-11）へ前進したため解除。**再発時の再ピン留め手順は `docs/blesh-pin.md` 参照**。blesh が上がった際は Ghostty で新規ターミナルを開いて入力確認すること。
 - **checkov**: nixpkgs `e2587ca`（2026-07-23）以降で依存の `pycep-parser` / `policy-sentry` が `pythonMetadataCheckPhase` の版数一致チェックに失敗しビルド不能（派生の version と wheel の METADATA の version が食い違う nixpkgs 側の回帰）。専用 input `nixpkgs-checkov` 経由で `241313f`（2026-07-19）に固定。解除確認は下記コマンド参照。
   - checkov には**ピン留めとは別に** `hm/apps.nix` で `dontCheckRuntimeDeps` の override も乗っている（`aiohttp<3.14.0` 上限 vs nixpkgs の 3.14.1）。**2 段構えなので、ピンを外しても override は別途要否を判断する**。
 
 ピン解除可否の確認（`nix flake update` 後に実行）:
 
 ```bash
-# blesh: 2026-06-21 より新しい日付なら解除を試す
-nix eval --raw "github:nixos/nixpkgs/nixos-unstable#blesh.version"
-
 # checkov: ビルドが通れば解除可能（<rev> は flake.lock の nixpkgs の rev）
 nix build --no-link --impure --expr 'let p = import (builtins.getFlake "github:nixos/nixpkgs/<rev>") { system = "x86_64-linux"; config.permittedInsecurePackages = [ "python3.14-ecdsa-0.19.2" ]; }; in p.checkov'
 ```

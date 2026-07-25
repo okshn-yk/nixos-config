@@ -139,16 +139,33 @@ in
         ];
       };
 
-      # `sudo logid -v` / journalctl -u logid.service で確認した実機の認識名（Bluetooth 接続）。
-      deviceNames = [
-        "Wireless Mouse MX Master 3"
-        "MX Master 4"
+      # `sudo logid -v` / journalctl -u logid.service で確認した実機の認識名。
+      devices = [
+        # MX Master 3 は従来どおり高解像度スクロールを使用する。
+        (
+          commonDeviceSettings
+          // {
+            name = "Wireless Mouse MX Master 3";
+          }
+        )
+
+        # MX Master 4 は1ノッチ当たりの移動量をMX Master 3へ近づけるため、
+        # 高解像度スクロールを無効化して通常のホイールイベントを使用する。
+        (
+          commonDeviceSettings
+          // {
+            name = "MX Master 4";
+            hiresscroll = commonDeviceSettings.hiresscroll // {
+              hires = false;
+            };
+          }
+        )
       ];
     in
     {
       enable = true;
       config = {
-        devices = map (name: commonDeviceSettings // { inherit name; }) deviceNames;
+        inherit devices;
       };
     };
 }

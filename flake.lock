@@ -148,22 +148,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-blesh": {
-      "locked": {
-        "lastModified": 1781577229,
-        "narHash": "sha256-lrp67w8AulE9Ks53n27I45ADSzbOCn4H+CNW1Ck8B+8=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "567a49d1913ce81ac6e9582e3553dd90a955875f",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "567a49d1913ce81ac6e9582e3553dd90a955875f",
-        "type": "github"
-      }
-    },
     "nixpkgs-checkov": {
       "locked": {
         "lastModified": 1784497964,
@@ -201,7 +185,6 @@
         "codex-cli-nix": "codex-cli-nix",
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-blesh": "nixpkgs-blesh",
         "nixpkgs-checkov": "nixpkgs-checkov",
         "rust-overlay": "rust-overlay",
         "sops-nix": "sops-nix",
