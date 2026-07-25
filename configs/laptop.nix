@@ -27,7 +27,10 @@
   # Hibernate / Suspend-then-Hibernate
   # ==========================================
   # スワップパーティションをハイバネート先に指定（RAM 27GB に対して 30GB swap）
-  boot.resumeDevice = "/dev/disk/by-uuid/c40808f8-c3ca-4189-b3db-c0f6dcd1a9aa";
+  # UUID をここにも書くと hardware-configuration.nix の swapDevices と二重管理になり、
+  # ディスク再作成時に片方だけ古くなってハイバネート復帰が静かに壊れる。
+  # 唯一の正である swapDevices から導出する。
+  boot.resumeDevice = (builtins.head config.swapDevices).device;
 
   # s2idle で30分経過後、自動的にハイバネートへ移行
   systemd.sleep.settings.Sleep = {

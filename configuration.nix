@@ -13,6 +13,7 @@
     ./configs/aws-config.nix
     ./configs/desktop.nix
     ./configs/dev-env.nix
+    ./configs/hardware-amd.nix
     ./configs/laptop.nix
     ./configs/wifi.nix
     ./configs/keymap.nix
@@ -28,12 +29,8 @@
   # Bootloader
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  # AMD 固有のカーネルパラメータ（amd_pstate 等）は configs/hardware-amd.nix に分離した。
 
-  # AMD GPU スリープ復帰問題対策
-  boot.kernelParams = [
-    "mem_sleep_default=s2idle"
-    "amd_pstate=active"
-  ];
   hardware.graphics.enable = true;
 
   # Nix Settings
