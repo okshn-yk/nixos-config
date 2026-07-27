@@ -96,6 +96,27 @@
       # USB 自動サスペンド
       USB_AUTOSUSPEND = 1;
 
+      # 指紋リーダー(Synaptics Prometheus MIS, 06cb:00bd)をオートサスペンドから除外。
+      # 無操作2秒で suspend され、認証のたびに xhci のデバイスリセットを伴って復帰していた:
+      #   kernel: usb 3-3: reset full-speed USB device number 3 using xhci_hcd
+      # このリセットが1日39回発生していたのを4回(システムサスペンド起因のみ)に削減する。
+      # TLP は HID サブデバイス(bInterfaceClass=03)を自動除外するが、このセンサーは
+      # bDeviceClass=ff(ベンダー固有)のため対象外で、明示的な denylist が要る。
+      #
+      # 効果の範囲に注意。当初これを「認証精度が不安定」の原因と見て入れたが、
+      # 実測の結果それは誤りだった。真因は照合率の低さ(テンプレート1本のみで
+      # verify-no-match が頻発し、pam_fprintd が3回で打ち切ってパスワードへ
+      # フォールバックする)で、指紋の再登録で対処した。
+      # 併発していた fprintd の "Device was already claimed" も無関係で、
+      # 復帰時に2本目の PAM スタックが約2.4msで Claim に失敗して消えるだけの
+      # 無害な現象。この設定を入れた後も同じ頻度で出るが実害はない。
+      # よってこの行はアイドル時の無駄な USB リセット削減のみが目的。
+      #
+      # power/control を on に固定するだけでランタイムPMのみに作用し、
+      # システムサスペンド/ハイバネートには影響しない。
+      # 不要になったらこの行を削除すれば元の挙動に戻る。
+      USB_DENYLIST = "06cb:00bd";
+
       # PCIe ランタイム省電力
       RUNTIME_PM_ON_AC = "on";
       RUNTIME_PM_ON_BAT = "auto";
