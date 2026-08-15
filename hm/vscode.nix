@@ -1,5 +1,24 @@
 { pkgs, ... }:
 
+let
+  # hashicorp.terraform: nixpkgs が 2.40.0 に記録した src ハッシュが実際の配信物と
+  # 食い違いビルド不能（マーケットプレイスの vsix は複数回取得しても同一なので、
+  # nixpkgs 側の更新ミス）。実測値で上書きする。
+  # 解除条件: nixpkgs が正しいハッシュへ修正、または次バージョンへ更新されたら削除。
+  #   （バージョンが上がれば下の条件式が外れて自動的に素の派生へ戻る）
+  terraformExtension =
+    let
+      ext = pkgs.vscode-extensions.hashicorp.terraform;
+    in
+    if ext.version == "2.40.0" then
+      ext.overrideAttrs (old: {
+        src = old.src.overrideAttrs (_: {
+          outputHash = "sha256-UsyKO7zTSDovproPUaIWfqmJxIjZfNTwhaQuH2xIzyE=";
+        });
+      })
+    else
+      ext;
+in
 {
   programs.vscode = {
     enable = true;
@@ -8,7 +27,7 @@
         bbenoist.nix
         ms-python.python
         charliermarsh.ruff
-        hashicorp.terraform
+        terraformExtension
         ms-azuretools.vscode-docker
         eamodio.gitlens
         esbenp.prettier-vscode
