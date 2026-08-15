@@ -20,6 +20,22 @@ let
     "browser.translations.panelShown" = true;
     "browser.translations.automaticallyPopup" = true;
 
+    # ▼ フォント表示 (macOS 風の滑らかな描画)
+    # ページが Arial 等を指定した場合の代替は fontconfig 側の alias に任せる
+    # (configs/desktop.nix の localConf)。ここは総称ファミリの実体を決める。
+    "font.default.x-western" = "sans-serif";
+    "font.default.ja" = "sans-serif";
+    "font.name-list.sans-serif.x-western" = "Inter, Noto Sans, Noto Sans CJK JP";
+    "font.name-list.sans-serif.ja" = "Inter, Noto Sans CJK JP";
+    "font.name-list.serif.x-western" = "Noto Serif, Noto Serif CJK JP";
+    "font.name-list.serif.ja" = "Noto Serif CJK JP";
+    "font.name-list.monospace.x-western" = "HackGen Console, Noto Sans Mono CJK JP";
+    "font.name-list.monospace.ja" = "HackGen Console, Noto Sans Mono CJK JP";
+    # グリフを整数ピクセルに丸めず配置する (macOS のような字間の均一さ)
+    "gfx.text.subpixel-position.force-enabled" = true;
+    # fontconfig の代替チェーンを深くたどる (既定 3 だと alias が届かないことがある)
+    "gfx.font_rendering.fontconfig.max_generic_substitutions" = 127;
+
     # ▼ 新しいタブページのスポンサー広告を無効化
     "browser.newtabpage.activity-stream.showSponsoredTopSites" = false;
     "browser.newtabpage.activity-stream.showSponsored" = false;

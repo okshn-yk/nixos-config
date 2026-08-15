@@ -68,12 +68,14 @@
   # Fonts
   fonts = {
     packages = with pkgs; [
+      noto-fonts # 欧文 Noto (Sans/Serif)。CJK 版だけだとラテン字形が来ない
       noto-fonts-cjk-serif
       noto-fonts-cjk-sans
       noto-fonts-color-emoji
       nerd-fonts.fira-code
       hackgen-font
       hackgen-nf-font
+      inter # 本文用ラテン体。Helvetica/SF 系に近く Web の Arial 代替に使う
     ];
     fontconfig = {
       defaultFonts = {
@@ -81,12 +83,62 @@
           "HackGen Console"
           "Noto Sans Mono CJK JP"
         ];
+        # sans-serif に等幅の HackGen を置くと Web ページ（Google 検索等）が
+        # 等幅で表示されて読みにくいため、プロポーショナル体を先頭にする
         sansSerif = [
-          "HackGen"
+          "Inter"
+          "Noto Sans"
           "Noto Sans CJK JP"
         ];
-        serif = [ "Noto Serif CJK JP" ];
+        serif = [
+          "Noto Serif"
+          "Noto Serif CJK JP"
+        ];
       };
+
+      # macOS 風のレンダリング:
+      # ヒンティングなし + グレースケール AA でアウトライン本来の字形を保つ
+      # （輪郭がぼやけて見える場合は hinting.enable = true / style = "slight"）
+      antialias = true;
+      hinting.enable = false;
+      subpixel.rgba = "none";
+
+      # Web フォント指定でよく来る MS/Apple 系の名前を手持ちのフォントへ寄せる
+      # （Google 検索は Arial 指定。alias が無いと defaultFonts へ落ちる）
+      localConf = ''
+        <?xml version="1.0"?>
+        <!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
+        <fontconfig>
+          <alias binding="same">
+            <family>Arial</family>
+            <accept><family>Inter</family></accept>
+          </alias>
+          <alias binding="same">
+            <family>Helvetica</family>
+            <accept><family>Inter</family></accept>
+          </alias>
+          <alias binding="same">
+            <family>Helvetica Neue</family>
+            <accept><family>Inter</family></accept>
+          </alias>
+          <alias binding="same">
+            <family>Roboto</family>
+            <accept><family>Inter</family></accept>
+          </alias>
+          <alias binding="same">
+            <family>Segoe UI</family>
+            <accept><family>Inter</family></accept>
+          </alias>
+          <alias binding="same">
+            <family>Times New Roman</family>
+            <accept><family>Noto Serif</family></accept>
+          </alias>
+          <alias binding="same">
+            <family>Courier New</family>
+            <accept><family>HackGen Console</family></accept>
+          </alias>
+        </fontconfig>
+      '';
     };
   };
 }

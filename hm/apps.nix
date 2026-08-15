@@ -89,6 +89,14 @@ in
       show-in-lock-screen = false;
     };
 
+    # フォント描画を macOS 風に（ヒンティングなし + グレースケール AA）
+    # GTK アプリ（Floorp/Firefox 含む）は fontconfig より GNOME のこの設定を
+    # 優先するため、configs/desktop.nix の fontconfig 側と揃えておく
+    "org/gnome/desktop/interface" = {
+      font-hinting = "none";
+      font-antialiasing = "grayscale";
+    };
+
     # タッチパッドのポインタ加速
     #
     # 「最初はゆっくり、速く動かすほど大きく飛ぶ」挙動は libinput の

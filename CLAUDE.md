@@ -42,7 +42,7 @@ nix develop
 
 | ファイル         | 内容                                                                       |
 | ---------------- | -------------------------------------------------------------------------- |
-| `desktop.nix`    | GNOME、Pipewire オーディオ、フォント（HackGen, Noto CJK）、Fcitx5+Mozc IME |
+| `desktop.nix`    | GNOME、Pipewire オーディオ、フォント（Inter, HackGen, Noto CJK）と描画設定（ヒンティング無効＋グレースケール AA の macOS 風）、Web フォント名の alias、Fcitx5+Mozc IME |
 | `dev-env.nix`    | Podman、nix-ld（VSCode Server 互換）、基本開発ツール                       |
 | `keymap.nix`     | xremap キーリマップ（カスタム「Onishi Layout」）                           |
 | `hardware-amd.nix` | AMD 固有のカーネルパラメータ（`amd_pstate`, `mem_sleep_default`）。Intel 機へ移行する際は import を外す |
