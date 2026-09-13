@@ -74,6 +74,7 @@
       "terraform"
       "xmind"
       "google-chrome"
+      "chatgpt" # pkgs/chatgpt.nix（公式 Linux 版 .deb の自前パッケージ）
     ];
 
   # 一時的に許可するinsecureパッケージ

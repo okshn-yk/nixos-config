@@ -64,6 +64,8 @@ in
     slack
     xmind
     google-chrome # Playwright MCP が依存（削除不可）
+    # ChatGPT デスクトップ（ChatGPT / Work / Codex 統合）。nixpkgs の chatgpt は macOS 専用のため自前
+    (callPackage ../pkgs/chatgpt.nix { })
     gnomeExtensions.appindicator
 
     # クリップボードマネージャ（GPaste）はシステム側の programs.gpaste.enable

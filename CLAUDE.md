@@ -71,6 +71,30 @@ nix develop
 | `mouse.nix`     | Solaar のルール（rules.yaml）とデーモン、`solaar-apply-settings`（ボタン diversion 適用） |
 | `zed.nix`       | Zed エディタ設定                                                                                     |
 
+### 自前パッケージ (`pkgs/`)
+
+nixpkgs に無い（または Linux 向けが無い）ものを `callPackage` 形式で置く。利用箇所から `pkgs.callPackage ../pkgs/<name>.nix { }` で呼ぶ。新規ファイルは `git add` しないと flake から見えない。
+
+| ファイル                     | 内容                                                                                   |
+| ---------------------------- | -------------------------------------------------------------------------------------- |
+| `chatgpt.nix`                | ChatGPT デスクトップ（公式 Linux 版 .deb を autoPatchelf で再パッケージ）。引込み元: `hm/apps.nix` |
+| `chatgpt-prepare-plugins.sh` | 上記のラッパーが起動前に source する処理。同梱プラグインの書き込み可能なコピーを `~/.cache/chatgpt-nix/<ストアパス名>/` に作る |
+
+ChatGPT デスクトップの注意点:
+
+- **更新は手動**。アプリ内アップデータは効かない。OpenAI の apt リポジトリの一覧から版とハッシュを取り、`pkgs/chatgpt.nix` の `version` / `hash` を差し替える（`pool/` 配下の旧版が消えると再ビルド不能になるので、放置せず追従する）。
+- **プラグインのコピーを外さないこと**。アプリは同梱プラグインを `fs.cp` で `~/.codex/.tmp` に複製してから書き換えるが、Nix ストアから複製すると読み取り専用のまま書き込みが EACCES で失敗し、browser use を含む同梱プラグインが導入されない。`CODEX_ELECTRON_BUNDLED_PLUGINS_RESOURCES_PATH` で書き込み可能なコピーに向けて回避している。
+- **`app.asar` の `process.report.getReport()` 置換を外さないこと**。この Electron は `getReport()` で SIGILL を起こす。detect-libc は ELF インタプリタ → `/usr/bin/ldd` → `getReport()` の順に libc を判定するが、patchelf で PT_INTERP がファイル末尾へ移り、NixOS には `/usr/bin/ldd` も無いため `getReport()` まで到達し、プロジェクトを開いて git ワーカーが `@parcel/watcher` を読んだ瞬間にアプリごと落ちる（「応答なし」→終了。coredump の落ちたスレッド名は `git`）。同じバイト長の空オブジェクト式に置換している。件数が 1 件でなくなるとビルドが止まるので、その時は置換を見直す。
+- `~/.codex` は Codex CLI と共有。起動のたびに `~/.codex/config.toml` の `mcp_servers.node_repl` / `cua_repl` へ**そのときのストアパスを書き込む**。版を上げて旧版を GC した後、アプリを一度も起動しないまま Codex CLI を使うと、この MCP サーバーの起動に失敗する（アプリを起動すれば書き直される）。
+- 動作確認のログは `chatgpt --enable-logging=stderr` で見られる。`browser_use_availability_resolved available=true` と `plugin_install_succeeded pluginName=browser` が出ていれば browser use は使える状態。
+
+```bash
+# 最新版と SHA256（16進）を確認
+curl -s https://persistent.oaistatic.com/codex-app-prod/linux/deb/dists/stable/main/binary-amd64/Packages | awk '/^Version:/{v=$2} /^SHA256:/{print v, $2}'
+# pkgs/chatgpt.nix の hash 用に SRI 形式へ変換
+nix hash convert --hash-algo sha256 --to sri <SHA256>
+```
+
 ### シークレット管理
 
 sops-nix と age 暗号化を使用。`secrets.yaml`に保存し、SSH ホスト鍵（`/etc/ssh/ssh_host_ed25519_key`）で復号。
