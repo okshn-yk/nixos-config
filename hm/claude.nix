@@ -7,6 +7,8 @@
 }:
 
 let
+  claudeCodePkg = inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.default;
+
   # ステータスライン用スクリプト
   claudeStatuslineScript = pkgs.writeShellScript "claude-statusline" ''
     input=$(cat)
@@ -59,8 +61,12 @@ let
     #   未取得の場合はセクションごと非表示にする。
     fmt_reset() {
         # $1: resets_at (Unix epoch秒) → "→HH:MM" のローカル時刻。無効なら空。
-        if [ -n "$1" ] && [ "$1" != "null" ] && [ "$1" -gt 0 ] 2>/dev/null; then
-            printf '→%s' "$(${pkgs.coreutils}/bin/date -d "@$1" +%H:%M 2>/dev/null)"
+        # 小数（例 1787699103.5）で来ることがあり、そのまま [ -gt ] に渡すと
+        # 「integer expression expected」で失敗する。2>/dev/null に握り潰されて
+        # リセット時刻だけが黙って消えるため、比較前に整数部だけを取り出す。
+        local ts=''${1%%.*}
+        if [ -n "$ts" ] && [ "$ts" != "null" ] && [ "$ts" -gt 0 ] 2>/dev/null; then
+            printf '→%s' "$(${pkgs.coreutils}/bin/date -d "@$ts" +%H:%M 2>/dev/null)"
         fi
     }
 
@@ -93,7 +99,7 @@ in
   home.packages = with pkgs; [
     # 1. Claude Code
     # claude-code
-    inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
+    claudeCodePkg
 
     # 1b. Codex (OpenAI Codex CLI)
     # nixpkgs の codex は上流リリースに数日遅れるため、追従型 flake を使う。
@@ -106,6 +112,35 @@ in
     nixfmt # Formatter: コードを編集した後の整形用
 
   ];
+
+  # ===========================================================================
+  # claude-cli:// のディープリンクハンドラ
+  # ===========================================================================
+  # home.nix の xdg.mimeApps が x-scheme-handler/claude-cli をこの .desktop へ
+  # 向けているが、実体は Claude Code が ~/.local/share/applications へ自作した
+  # 管理外ファイルだった。しかもその Exec は自前インストールの
+  # ~/.local/bin/claude（2026-02 時点の 2.1.50 で凍結）を指しており、PATH 上の
+  # Nix 管理版 (2.1.246) とは別物が起動していた。
+  #
+  # ここで xdg.desktopEntries ではなく xdg.dataFile を使うのは書き込み先の違いによる。
+  # useUserPackages = true のとき xdg.desktopEntries は home.packages 経由で
+  # /etc/profiles/per-user/<user>/share/applications へ入るが、XDG の探索順は
+  # $XDG_DATA_HOME(= ~/.local/share) が $XDG_DATA_DIRS より先。つまり自作ファイルが
+  # 残っている限りそちらが優先され、宣言しても何も変わらない（実測で確認済み）。
+  # xdg.dataFile なら ~/.local/share/applications に直接置くので確実に勝つ。
+  #
+  # 加えて Claude Code はこのファイルを再生成しうる。同じパスを home-manager が
+  # 所有していれば、次の activation で backupFileExtension = "hm-bak"（flake.nix）
+  # により退避されたうえで symlink に戻るので、影が復活しても自動で直る。
+  xdg.dataFile."applications/claude-code-url-handler.desktop".text = ''
+    [Desktop Entry]
+    Name=Claude Code URL Handler
+    Comment=Handle claude-cli:// deep links for Claude Code
+    Exec=${claudeCodePkg}/bin/claude --handle-uri %u
+    Type=Application
+    NoDisplay=true
+    MimeType=x-scheme-handler/claude-cli;
+  '';
 
   # ===========================================================================
   # Claude Code Status Line Script
@@ -126,6 +161,13 @@ in
   home.activation.claudeMcpConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     CLAUDE_JSON="$HOME/.claude.json"
 
+    # 期待する playwright エントリ。定義はここ一箇所。
+    DESIRED=$(${pkgs.jq}/bin/jq -n '{
+      "type": "stdio",
+      "command": "${pkgs.playwright-mcp}/bin/playwright-mcp",
+      "args": ["--executable-path", "/etc/profiles/per-user/${username}/bin/google-chrome-stable"]
+    }')
+
     # 新規環境では ~/.claude.json が無く、また壊れた JSON だと後段の jq が失敗して
     # activation 全体（set -e）が落ちる。妥当性を検証して駄目なら作り直す
     # （ファイルが無いケースもこの検証で一緒に吸収できる）。
@@ -133,15 +175,27 @@ in
       echo '{}' > "$CLAUDE_JSON"
     fi
 
-    ${pkgs.jq}/bin/jq '.mcpServers.playwright = {
-      "type": "stdio",
-      "command": "${pkgs.playwright-mcp}/bin/playwright-mcp",
-      "args": ["--executable-path", "/etc/profiles/per-user/${username}/bin/google-chrome-stable"]
-    }' "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
+    # すでに期待どおりなら書き込まない。
+    # ~/.claude.json は Claude Code 自身が実行中に更新するファイルなので、
+    # rebuild のたびに読んで書き戻すと「読み込み〜mv の間に Claude Code が
+    # 書いた内容」を取りこぼす（mv 自体は原子的でも、read-modify-write 全体は
+    # そうではない）。書き込みを実際に変更が要るときだけに絞れば、
+    # 通常の rebuild ではこの窓が発生しない。
+    if ! ${pkgs.jq}/bin/jq -e --argjson want "$DESIRED" \
+        '.mcpServers.playwright == $want' "$CLAUDE_JSON" >/dev/null 2>&1; then
+      ${pkgs.jq}/bin/jq --argjson want "$DESIRED" '.mcpServers.playwright = $want' \
+        "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
+    fi
   '';
 
   home.activation.claudeStatusLine = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     SETTINGS_FILE="$HOME/.claude/settings.json"
+
+    DESIRED_STATUSLINE=$(${pkgs.jq}/bin/jq -n '{
+      "type": "command",
+      "command": "~/.claude/statusline.sh",
+      "padding": 0
+    }')
 
     # .claudeディレクトリが存在しない場合は作成
     mkdir -p "$HOME/.claude"
@@ -152,11 +206,12 @@ in
       echo '{}' > "$SETTINGS_FILE"
     fi
 
-    # statusLine設定を追加/更新（既存の設定は保持）
-    ${pkgs.jq}/bin/jq '.statusLine = {
-      "type": "command",
-      "command": "~/.claude/statusline.sh",
-      "padding": 0
-    }' "$SETTINGS_FILE" > "$SETTINGS_FILE.tmp" && mv "$SETTINGS_FILE.tmp" "$SETTINGS_FILE"
+    # statusLine設定を追加/更新（既存の設定は保持）。
+    # 上の claudeMcpConfig と同じ理由で、差分があるときだけ書き込む。
+    if ! ${pkgs.jq}/bin/jq -e --argjson want "$DESIRED_STATUSLINE" \
+        '.statusLine == $want' "$SETTINGS_FILE" >/dev/null 2>&1; then
+      ${pkgs.jq}/bin/jq --argjson want "$DESIRED_STATUSLINE" '.statusLine = $want' \
+        "$SETTINGS_FILE" > "$SETTINGS_FILE.tmp" && mv "$SETTINGS_FILE.tmp" "$SETTINGS_FILE"
+    fi
   '';
 }

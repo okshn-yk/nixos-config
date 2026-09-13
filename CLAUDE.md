@@ -64,7 +64,7 @@ nix develop
 | `shell.nix`     | Bash 設定、エイリアス、Starship、zoxide、eza、fzf、bat、ble.sh                                      |
 | `git.nix`       | Git 設定、gh/ghq/lazygit、gh による認証ヘルパー                                                     |
 | `vscode.nix`    | VS Code 設定                                                                                        |
-| `claude.nix`    | Claude Code（claude-code-nix フレーク経由）、Nix ツール群（nixd, nix-search-cli, nix-tree, nixfmt） |
+| `claude.nix`    | Claude Code（claude-code-nix フレーク経由）、`claude-cli://` の URL ハンドラ、statusline、Nix ツール群（nixd, nix-search-cli, nix-tree, nixfmt） |
 | `autostart.nix` | 自動起動アプリ（auto-move-windows でワークスペース割当）                                            |
 | `rust.nix`      | Rust 開発環境（rust-bin stable, cargo-edit/watch/audit/expand, bacon）                              |
 | `go.nix`        | Go 開発環境                                                                                          |
