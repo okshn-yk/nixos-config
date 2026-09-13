@@ -196,10 +196,9 @@ let
   '';
 in
 {
-  home.packages = [
-    pkgs.solaar
-    applySettings
-  ];
+  # solaar 本体は configs/mouse.nix の environment.systemPackages に一本化している
+  # （udev ルールと uinput の設定も同じファイルにあるため）。ここは適用スクリプトのみ。
+  home.packages = [ applySettings ];
 
   # ルールファイルは宣言的に管理する。
   # 注意: これは読み取り専用シンボリックリンクになるため、Solaar GUI の

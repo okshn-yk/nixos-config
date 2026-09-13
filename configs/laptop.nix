@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, lib, ... }:
 
 {
   # Laptop Hardware Tweaks (Touchpad, Power, Sleep & Fingerprint)
@@ -146,6 +146,6 @@
 
   # Fingerprint Reader
   services.fprintd.enable = true;
-  security.pam.services.login.fprintAuth = pkgs.lib.mkForce true;
+  security.pam.services.login.fprintAuth = lib.mkForce true;
   security.pam.services.gdm-fingerprint.fprintAuth = true;
 }
