@@ -111,6 +111,14 @@ sops-nix と age 暗号化を使用。`secrets.yaml`に保存し、SSH ホスト
 入れる場合は、その `let` 束縛にも同じ許可リストを書くこと**（独立評価には
 `configuration.nix` の `nixpkgs.config` が届かない）。
 
+### 非フリーパッケージの扱い
+
+`configuration.nix` の `allowUnfreePredicate` にホワイトリストを置く。
+判定は `lib.getName` の戻り値との完全一致なので、attribute 名ではなく **pname** を書く
+（例: `pkgs._1password-gui` の `getName` は `"1password"`。`"1password-gui"` と書いても効かない）。
+不要になったエントリは削除して `nixos-rebuild dry-build --flake .` が通ることを確認する。
+通らなければそのエントリは生きていた、という切り分けになる。
+
 ### パッケージのピン留め
 
 回帰を含むパッケージは正常版にピン留めする。各ピンには引き込み元 / 理由 / 解除条件をコメントで明記し、`nix flake update` 後に解除可否を見直す。

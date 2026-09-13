@@ -64,14 +64,10 @@
     pkg:
     builtins.elem (lib.getName pkg) [
       "vscode"
-      "vscode-extension-ms-vscode-remote-remote-ssh"
       "vscode-extension-fill-labs-dependi"
       "slack"
       "obsidian"
       "1password"
-      "1password-cli"
-      "1password-gui"
-      "terraform"
       "xmind"
       "google-chrome"
       "chatgpt" # pkgs/chatgpt.nix（公式 Linux 版 .deb の自前パッケージ）
