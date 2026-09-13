@@ -16,6 +16,11 @@ let
       delay = 0; # ターミナル: すぐ作業したいので即時 (WS2)
       desc = "Ghostty terminal";
     };
+    chatgpt = {
+      exec = "${pkgs.callPackage ../pkgs/chatgpt.nix { }}/bin/chatgpt";
+      delay = 2; # WS2: ブラウザ・ターミナルの起動後
+      desc = "ChatGPT desktop";
+    };
     vscode = {
       exec = "${pkgs.vscode}/bin/code";
       delay = 3; # WS2
@@ -111,6 +116,7 @@ in
         "floorp.desktop:1" # WS 1: ブラウザ
         "com.mitchellh.ghostty.desktop:2" # WS 2: ターミナル
         "code.desktop:2" # WS 2: コード
+        "chatgpt.desktop:2" # WS 2: AI アシスタント
         "dev.zed.Zed.desktop:3" # WS 3: エディタ
         "obsidian.desktop:3" # WS 3: ノート
         "slack.desktop:4" # WS 4: チャット
