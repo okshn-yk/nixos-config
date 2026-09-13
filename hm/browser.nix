@@ -73,7 +73,12 @@ in
   # ===========================================================================
   # Web Browser Configuration
   # ===========================================================================
-
+  # Firefox: 既定ブラウザではなく、Floorp が壊れたとき用のフォールバック。
+  # Floorp は Firefox ESR に追従するフォークで、上流の更新が遅れたり
+  # プロファイル移行に失敗したりしうるため、同じ sharedSettings /
+  # sharedPolicies を適用した素の Firefox を常備しておく。
+  # 常用側の指定（BROWSER / xdg.mimeApps / autostart / ワークスペース割当）は
+  # すべて Floorp のみを指しており、Firefox が既定に戻ることはない。
   programs.firefox = {
     enable = true;
     # プロファイルを XDG パス (~/.config/mozilla/firefox) に配置
@@ -89,8 +94,8 @@ in
     policies = sharedPolicies;
   };
 
-  # Floorp (Firefox フォーク) を Firefox 設定を流用して併設
-  # 動作確認後、既定ブラウザを切り替える運用を想定
+  # Floorp (Firefox フォーク): こちらが常用の既定ブラウザ。
+  # programs.floorp は programs.firefox と同一スキーマなので設定を流用している。
   programs.floorp = {
     enable = true;
     # 1Password連携
