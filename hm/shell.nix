@@ -66,7 +66,9 @@
       # (git checkout -- flake.lock) が他の入力の更新まで破棄してしまうため。
       # 成功時の git commit -- flake.lock も同様に、無関係な入力の更新まで
       # 巻き込んでコミットしてしまう。
-      _update_flake_input() {  # $1=入力名 $2=コミットメッセージ
+      # 関数全体を subshell にして、cd が呼び出し元のカレントディレクトリを
+      # 書き換えないようにする（どこで update-claude を打っても戻ってこられる）。
+      _update_flake_input() (  # $1=入力名 $2=コミットメッセージ
         cd ~/nixos-config || return 1
         if ! git diff --quiet flake.lock; then
           echo "❌ flake.lock に未コミットの変更があります。先にコミットするか破棄してください。"
@@ -89,7 +91,7 @@
         fi
         git commit -m "$2" -- flake.lock
         sudo nixos-rebuild switch --flake .
-      }
+      )
 
       # Claude Code / Codex の更新ショートカット（中身は上の共通処理）。
       update-claude() { _update_flake_input claude-code-nix "chore: update claude-code"; }
