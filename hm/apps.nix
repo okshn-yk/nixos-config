@@ -1,27 +1,5 @@
-{
-  pkgs,
-  inputs,
-  system,
-  ...
-}:
+{ pkgs, ... }:
 
-let
-  # checkov ピン留め（専用 input nixpkgs-checkov から取得）。
-  # 2026-07-23 以降の nixpkgs では依存の pycep-parser / policy-sentry が
-  # pythonMetadataCheckPhase の版数一致チェックに失敗しビルド不能（派生の
-  # version と wheel の .dist-info/METADATA の version が食い違う nixpkgs 側の回帰）。
-  # 直前の正常なリビジョン（2026-07-19）に固定する。
-  # 消費者がこのファイルだけなので、グローバル overlay ではなく利用箇所で解決する。
-  # 別 nixpkgs の独立評価なので configuration.nix の nixpkgs.config は届かない。
-  # permittedInsecurePackages を同じ内容でここにも明示する必要がある。
-  # 解除条件: 上流で版数不整合が修正されたら、この let と flake.nix の
-  # nixpkgs-checkov input を削除して pkgs.checkov に戻す。
-  checkovPinned =
-    (import inputs.nixpkgs-checkov {
-      inherit system;
-      config.permittedInsecurePackages = [ "python3.14-ecdsa-0.19.2" ];
-    }).checkov;
-in
 {
   # ===========================================================================
   # Packages & GNOME Integration
@@ -45,15 +23,7 @@ in
     btop
 
     # Security Scanning
-    # checkov 3.3.6 は aiohttp<3.14.0 を要求するが、nixpkgs更新で aiohttp 3.14.1 が
-    # 引き込まれ pythonRuntimeDepsCheckHook が失敗する。実行時の非互換ではなく
-    # メタデータの上限が保守的なだけなので、ランタイム依存チェックのみ無効化。
-    # 解除条件: nixpkgs側で checkov が aiohttp 3.14 を許可したら override を削除。
-    # 見直し: `nix flake update` 後にこの override の要否を確認。
-    # ※ ピン留め（上の checkovPinned）とは別問題なので、要否は個別に判断する。
-    (checkovPinned.overridePythonAttrs (_: {
-      dontCheckRuntimeDeps = true;
-    })) # IaC セキュリティスキャン（Terraform, Dockerfile等）
+    checkov # IaC セキュリティスキャン（Terraform, Dockerfile等）
     trivy # コンテナ・ファイルシステム脆弱性スキャン
 
     # IaC Tools

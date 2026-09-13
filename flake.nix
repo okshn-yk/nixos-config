@@ -5,17 +5,6 @@
     # NixOSのパッケージリポジトリ (Unstable版を使用)
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
-    # checkov ピン留め専用 nixpkgs（checkov 以外には未使用）。
-    # 2026-07-23 更新の nixpkgs（e2587caef70cea85dd97d7daab492899902dbf5d 以降）では
-    # checkov の依存 pycep-parser / policy-sentry が pythonMetadataCheckPhase の
-    # 版数一致チェックに失敗しビルド不能（派生の version と wheel の
-    # .dist-info/METADATA の version が食い違う、nixpkgs 側の回帰）。
-    # 直前の正常なリビジョン（2026-07-19、稼働中システムと同一）に固定する。
-    # 利用箇所: hm/apps.nix（checkov をこの nixpkgs から直接取得）。
-    # 解除条件: 上流 nixpkgs で当該版数不整合が修正されたら、この input と
-    # hm/apps.nix の let 束縛を削除して通常の nixpkgs の checkov に戻す。
-    nixpkgs-checkov.url = "github:nixos/nixpkgs/241313f4e8e508cb9b13278c2b0fa25b9ca27163";
-
     # Home Manager設定
     home-manager = {
       url = "github:nix-community/home-manager/master";
@@ -93,24 +82,24 @@
             nixpkgs.overlays = [
               rust-overlay.overlays.default
 
-              # Solaar 1.1.20 へ更新（nixpkgs 現行は 1.1.19）。
-              # 1.1.19 では Bolt レシーバ(046d:C548)配下の MX Master 4 が
-              # "Protocol: unknown (device is offline)" になり HID++ ping が返らない。
-              # 1.1.20 の "Correctly handle timeout in Bolt discovery" で解消することを
-              # 実機で確認済み（HID++ 4.5 として全機能を列挙できるようになった）。
-              # pycairo は 1.1.20 の install_requires に追加されたので明示的に足す。
+              # Solaar に不足している実行時依存を足す overlay。
               # overlay に置くのは configs/mouse.nix と hm/mouse.nix の両方から
-              # 同一版を参照するため。
-              # 解除条件: nixpkgs の solaar が 1.1.20 以降になったらこの overlay を削除。
+              # 同一の派生を参照するため。
+              #
+              # 版の上書き（version / src）は 2026-08-26 に撤去した。当初は nixpkgs が
+              # 1.1.19 で、Bolt レシーバ(046d:C548)配下の MX Master 4 が
+              # "Protocol: unknown (device is offline)" になり HID++ ping が返らない
+              # 問題を 1.1.20 の "Correctly handle timeout in Bolt discovery" で
+              # 回避していたが、nixpkgs 側が 1.1.20 に追いついた。上書き後の src は
+              # nixpkgs のものと同一で、派生も出力パスも一致していた（実測）ので、
+              # 効果のない記述として削除した。
+              #
+              # 解除条件: pycairo と libnotify が nixpkgs の solaar の依存に入ったら
+              # この overlay ごと削除する（下の 2 つの理由がそのまま確認項目）。
               (final: prev: {
-                solaar = prev.solaar.overridePythonAttrs (old: rec {
-                  version = "1.1.20";
-                  src = final.fetchFromGitHub {
-                    owner = "pwr-Solaar";
-                    repo = "Solaar";
-                    tag = version;
-                    hash = "sha256-h/uiy0TtMicKch2cdXHur5DkvQun2sAw2HpFI7Qstqg=";
-                  };
+                solaar = prev.solaar.overridePythonAttrs (old: {
+                  # pycairo は 1.1.20 の install_requires に追加されたが nixpkgs 側は
+                  # 未追従（実測: propagatedBuildInputs に含まれない）。
                   propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [
                     final.python3Packages.pycairo
                   ];

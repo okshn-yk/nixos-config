@@ -58,7 +58,7 @@ nix develop
 
 | ファイル        | 内容                                                                                                |
 | --------------- | --------------------------------------------------------------------------------------------------- |
-| `apps.nix`      | パッケージ（言語、ビルドツール、GUI アプリ、checkov のピン留め）、GPaste のキーバインドと常駐設定、dconf、Fcitx5 |
+| `apps.nix`      | パッケージ（言語、ビルドツール、GUI アプリ、セキュリティスキャナ）、GPaste のキーバインドと常駐設定、dconf、Fcitx5 |
 | `terminal.nix`  | Ghostty、Zellij、tmux 設定                                                                          |
 | `browser.nix`   | Firefox / Floorp 設定（プロファイル、ポリシー。既定は Floorp）                                      |
 | `shell.nix`     | Bash 設定、エイリアス、Starship、zoxide、eza、fzf、bat、ble.sh                                      |
@@ -105,28 +105,37 @@ sops-nix と age 暗号化を使用。`secrets.yaml`に保存し、SSH ホスト
 各エントリには CVE 番号 / 引き込み元 / 許可した理由 / 削除条件 をインラインコメントで明記する。
 `nix flake update` 後はこのリストの要否を見直す。
 
-**⚠️ 許可リストは 2 箇所にある**: ピン留め用の別 nixpkgs を `import` する箇所
-（`hm/apps.nix` の `checkovPinned`）は独立評価のため `configuration.nix` の
-`nixpkgs.config` が届かず、同じ内容をその `let` 束縛にも書いている。
-エントリの追加・削除・**バージョン文字列の追随**（既定 Python の版上がり等）は
-必ず両方に反映する。片方だけ直すとビルド不能または不要な insecure 許可の残存になる。
-ピン留めを解除すれば重複も解消する。
+許可リストは `configuration.nix` の 1 箇所のみ。以前は checkov ピン留め用の
+別 nixpkgs を独立評価していたため `hm/apps.nix` にも同じ内容を書く必要があったが、
+2026-08-26 のピン解除で重複は解消した。**別 nixpkgs を `import` するピンを再び
+入れる場合は、その `let` 束縛にも同じ許可リストを書くこと**（独立評価には
+`configuration.nix` の `nixpkgs.config` が届かない）。
 
 ### パッケージのピン留め
 
 回帰を含むパッケージは正常版にピン留めする。各ピンには引き込み元 / 理由 / 解除条件をコメントで明記し、`nix flake update` 後に解除可否を見直す。
 
-ピン留めの置き場所は消費者の広さで決める。複数モジュールから参照するもの（Solaar）は `flake.nix` の overlay、単一ファイルからしか使わないもの（checkov）は利用箇所の `let` 束縛に置き、システム全体の overlay を増やさない。
+ピン留めの置き場所は消費者の広さで決める。複数モジュールから参照するものは `flake.nix` の overlay、単一ファイルからしか使わないものは利用箇所の `let` 束縛に置き、システム全体の overlay を増やさない。
 
+**現在アクティブなピンは無し。override は VS Code の terraform 拡張と、Solaar の依存を足す overlay（下記）のみ。**
+
+- **hashicorp.terraform (VS Code 拡張)**: nixpkgs が 2.40.0 に記録した src ハッシュが実際の配信物と食い違いビルド不能。`hm/vscode.nix` で実測値へ上書きする。`ext.version == "2.40.0"` の条件式でガードしてあるので、**バージョンが上がれば自動的に素の派生へ戻る**。
 - **blesh**: ~~ピン留め中~~ → **2026-07-25 に解除済み**。`0.4.0-devel4+6cffa91`（2026-06-21 nightly）の回帰で Ghostty で文字入力不能になっていたが、nixpkgs が別コミット（`d69e4d5`, 2026-07-11）へ前進したため解除。**再発時の再ピン留め手順は `docs/blesh-pin.md` 参照**。blesh が上がった際は Ghostty で新規ターミナルを開いて入力確認すること。
-- **checkov**: nixpkgs `e2587ca`（2026-07-23）以降で依存の `pycep-parser` / `policy-sentry` が `pythonMetadataCheckPhase` の版数一致チェックに失敗しビルド不能（派生の version と wheel の METADATA の version が食い違う nixpkgs 側の回帰）。専用 input `nixpkgs-checkov` 経由で `241313f`（2026-07-19）に固定し、`hm/apps.nix` の `checkovPinned` で直接 import している（消費者がこのファイルのみのため overlay にはしない）。解除確認は下記コマンド参照。
-  - checkov には**ピン留めとは別に** `hm/apps.nix` で `dontCheckRuntimeDeps` の override も乗っている（`aiohttp<3.14.0` 上限 vs nixpkgs の 3.14.1）。**2 段構えなので、ピンを外しても override は別途要否を判断する**。
+- **checkov**: ~~ピン留め + `dontCheckRuntimeDeps` override~~ → **2026-08-26 に両方とも解除済み**。nixpkgs `e2587ca`（2026-07-23）以降で依存の `pycep-parser` / `policy-sentry` が `pythonMetadataCheckPhase` に失敗しビルド不能だったため専用 input `nixpkgs-checkov` で固定していたが、checkov 3.3.9 が素の nixpkgs でビルドできることを確認して input・`checkovPinned` 束縛・override をすべて撤去した。再発したときの再ピン留め用に確認コマンドを下に残す。
+- **Solaar**: ~~1.1.20 への版上げ overlay~~ → **2026-08-26 に版の上書きのみ解除済み**。nixpkgs が 1.1.20 に追いついたため `version` / `src` を削除した。`flake.nix` の overlay 自体は残るが、役割は **`pycairo` と `libnotify` の追加**だけ（どちらも nixpkgs 側の派生に入っていない）。この 2 つが上流に入ったら overlay ごと削除できる。
 
 ピン解除可否の確認（`nix flake update` 後に実行）:
 
 ```bash
-# checkov: ビルドが通れば解除可能（<rev> は flake.lock の nixpkgs の rev）
-nix build --no-link --impure --expr 'let p = import (builtins.getFlake "github:nixos/nixpkgs/<rev>") { system = "x86_64-linux"; config.permittedInsecurePackages = [ "python3.14-ecdsa-0.19.2" ]; }; in p.checkov'
+# checkov: ビルドが通れば素の nixpkgs で使える（再ピン留めした場合の解除判定用）
+REV=$(nix eval --raw --impure --expr '(builtins.fromJSON (builtins.readFile ./flake.lock)).nodes.nixpkgs.locked.rev')
+nix build --no-link --impure --expr "let p = import (builtins.getFlake \"github:nixos/nixpkgs/$REV\") { system = \"x86_64-linux\"; config.permittedInsecurePackages = [ \"python3.14-ecdsa-0.19.2\" ]; }; in p.checkov"
+
+# Solaar: overlay ごと削除できるか（両方 true になったら削除可能）
+nix eval --impure --expr 'let p = (builtins.getFlake (toString ./.)).inputs.nixpkgs.legacyPackages.x86_64-linux; s = p.solaar; in {
+  pycairo  = builtins.any (x: (x.pname or "") == "pycairo")  s.propagatedBuildInputs;
+  libnotify = builtins.any (x: (x.pname or "") == "libnotify") s.buildInputs;
+}'
 ```
 
 ## 利用可能な Nix ツール
