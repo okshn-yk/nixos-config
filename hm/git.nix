@@ -20,9 +20,8 @@
       credential.helper = "!gh auth git-credential";
       init.defaultBranch = "main";
 
-      # 大きなプッシュ用のHTTP設定
+      # 通信停止検出。postBuffer は Git の既定値を使用する。
       http = {
-        postBuffer = 524288000; # 500MB
         lowSpeedLimit = 1000; # 1KB/s 未満を異常とみなす
         lowSpeedTime = 60; # 60秒続いたらタイムアウト
       };

@@ -10,6 +10,7 @@
     wget
     git
     curl
+    bubblewrap # Codex CLI / デスクトップの Linux サンドボックス実行に必要
     dnsutils # dig, nslookup
 
     # Encryption Tools

@@ -33,6 +33,8 @@
       method=auto
     '';
     mode = "0600";
+    # シークレット変更時に接続プロファイルを再読込する。接続の切断はしない。
+    restartUnits = [ "NetworkManager-reload-profiles.service" ];
   };
 
   # Hook to deploy the connection file
@@ -52,6 +54,25 @@
       RemainAfterExit = true;
     };
     before = [ "NetworkManager.service" ];
+    after = [ "sops-install-secrets.service" ];
     wantedBy = [ "multi-user.target" ];
+  };
+  # 起動時と sops 更新時の共通処理。NetworkManager 本体の再起動を避ける。
+  systemd.services.NetworkManager-reload-profiles = {
+    description = "Reload NetworkManager connection profiles after secret changes";
+    requires = [
+      "NetworkManager.service"
+      "NetworkManager-pre.service"
+    ];
+    after = [
+      "NetworkManager.service"
+      "NetworkManager-pre.service"
+    ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${config.networking.networkmanager.package}/bin/nmcli connection reload";
+    };
   };
 }

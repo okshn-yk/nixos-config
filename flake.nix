@@ -60,6 +60,7 @@
       hostName = "nixos";
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
+      repoPython = pkgs.python3.withPackages (ps: [ ps.pyyaml ]);
     in
     {
       nixosConfigurations.${hostName} = nixpkgs.lib.nixosSystem {
@@ -148,6 +149,11 @@
         ];
       };
 
+      # 復旧用キャッシュへ独自パッケージと配布元debを保存するため公開。
+      packages.${system}.chatgpt =
+        self.nixosConfigurations.${hostName}.pkgs.callPackage ./pkgs/chatgpt.nix
+          { };
+
       # `nix fmt` で使われるフォーマッタを公開
       formatter.${system} = pkgs.nixfmt;
 
@@ -159,14 +165,54 @@
           nixfmt
           nixd
           nix-search-cli
+          pkgs.gitleaks
+          repoPython
+          pkgs.restic
+          pkgs.shellcheck
         ];
       };
 
       # `nix flake check` に整形チェックを追加。未整形ファイルがあると失敗する。
-      checks.${system}.nixfmt = pkgs.runCommand "nixfmt-check" { nativeBuildInputs = [ pkgs.nixfmt ]; } ''
-        cd ${self}
-        nixfmt --check $(find . -name '*.nix')
-        touch $out
-      '';
+      checks.${system} = {
+        nixfmt = pkgs.runCommand "nixfmt-check" { nativeBuildInputs = [ pkgs.nixfmt ]; } ''
+          cd ${self}
+          nixfmt --check $(find . -name '*.nix')
+          touch $out
+        '';
+        secrets =
+          pkgs.runCommand "secrets-check"
+            {
+              nativeBuildInputs = [
+                pkgs.gitleaks
+                repoPython
+                pkgs.git
+                pkgs.bash
+                pkgs.shellcheck
+              ];
+            }
+            ''
+              python3 ${self}/scripts/check-sops.py ${self}/secrets.yaml
+              gitleaks dir --redact --no-banner ${self}
+              python3 ${self}/tests/security.py
+              shellcheck ${self}/scripts/*.sh ${self}/.githooks/pre-commit ${self}/hm/scripts/update-claude-json.sh
+              touch $out
+            '';
+        # 更新・JSON 保護・Solaar 復旧を、実機へ作用しない模擬コマンドで検証。
+        config-regressions =
+          pkgs.runCommand "config-regressions"
+            {
+              nativeBuildInputs = with pkgs; [
+                nodejs_24
+                bash
+                git
+                jq
+                coreutils
+              ];
+            }
+            ''
+              node ${self}/tests/config-regressions.mjs
+              touch $out
+            '';
+      };
     };
 }

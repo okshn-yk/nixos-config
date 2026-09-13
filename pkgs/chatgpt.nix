@@ -13,6 +13,7 @@
   stdenv,
   fetchurl,
   autoPatchelfHook,
+  bubblewrap,
   coreutils,
   dpkg,
   makeShellWrapper,
@@ -195,8 +196,10 @@ stdenv.mkDerivation (finalAttrs: {
 
     # MimeType は codex:// だけ残す。上流は http/https や CSV・Office 文書まで登録しており、
     # 既定アプリ未指定の型（home.nix の xdg.mimeApps に無いもの）を ChatGPT に奪われるため。
+    # Exec は上流の "chatgpt"（PATH 解決）のまま触らない。GNOME Shell は読み込んだ .desktop を
+    # 保持し、nixos-rebuild で /etc/profiles 配下が差し替わっても再読込しない（inotify は旧ストアの
+    # ディレクトリを見続ける）。Exec をストアパスにすると、再ログインするまで旧ビルドが起動し続ける。
     substitute usr/share/applications/chatgpt.desktop $out/share/applications/chatgpt.desktop \
-      --replace-fail "Exec=chatgpt %U" "Exec=$out/bin/chatgpt %U" \
       --replace-fail "$(grep '^MimeType=' usr/share/applications/chatgpt.desktop)" \
         "MimeType=x-scheme-handler/codex;"
 
@@ -219,7 +222,12 @@ stdenv.mkDerivation (finalAttrs: {
     makeShellWrapper $out/lib/chatgpt/ChatGPT $out/bin/chatgpt \
       "''${gappsWrapperArgs[@]}" \
       --run ". $out/libexec/chatgpt/prepare-plugins.sh" \
-      --suffix PATH : ${lib.makeBinPath [ xdg-utils ]} \
+      --suffix PATH : ${
+        lib.makeBinPath [
+          xdg-utils
+          bubblewrap
+        ]
+      } \
       --add-flags "\''${NIXOS_OZONE_WL:+\''${WAYLAND_DISPLAY:+--ozone-platform-hint=auto --enable-features=WaylandWindowDecorations --enable-wayland-ime=true}}"
   '';
 

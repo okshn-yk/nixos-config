@@ -24,7 +24,7 @@ in
     enable = true;
     profiles.default = {
       extensions = with pkgs.vscode-extensions; [
-        bbenoist.nix
+        jnoortheen.nix-ide # nixd を起動できる LSP 対応拡張
         ms-python.python
         charliermarsh.ruff
         terraformExtension
@@ -56,13 +56,16 @@ in
         "editor.formatOnSave" = true;
         "files.autoSave" = "onFocusChange";
         "nix.enableLanguageServer" = true;
-        "nix.serverPath" = "nixd";
+        "nix.serverPath" = "${pkgs.nixd}/bin/nixd";
         "nix.serverSettings" = {
           "nixd" = {
             "formatting" = {
-              "command" = [ "nixfmt" ];
+              "command" = [ "${pkgs.nixfmt}/bin/nixfmt" ];
             };
           };
+        };
+        "[nix]" = {
+          "editor.defaultFormatter" = "jnoortheen.nix-ide";
         };
         "[python]" = {
           "editor.defaultFormatter" = "charliermarsh.ruff";

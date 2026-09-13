@@ -1,0 +1,26 @@
+name: Repository checks
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    name: Nix and secret checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+      - name: Scan Git history and staged SOPS ciphertext
+        run: nix develop --no-write-lock-file --command bash scripts/check-secrets.sh --history
+      - name: Evaluate configuration and run checks
+        run: nix flake check --no-write-lock-file --print-build-logs

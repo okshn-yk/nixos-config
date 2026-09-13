@@ -1,6 +1,6 @@
-# CLAUDE.md
+# Repository agent instructions
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Claude Code と Codex 共通のリポジトリ作業ガイド。AGENTS.md はこのファイルへのリンク。
 
 ## 概要
 
@@ -163,7 +163,11 @@ nix eval --impure --expr 'let p = (builtins.getFlake (toString ./.)).inputs.nixp
 
 ### エイリアス・キーバインド
 
-- `update-claude` / `update-codex` - 各 flake 入力を更新してリビルド（実体は共通関数 `_update_flake_input`）。失敗時の巻き戻しが他の入力の更新を壊さないよう、`flake.lock` に未コミット変更があると実行を拒否する
+- `update-claude` / `update-codex` - 各 flake 入力を更新してリビルド（実体は共通関数 `_update_flake_input`）。失敗時の巻き戻しが他の入力の更新を壊さないよう、リポジトリ内に未コミット・未追跡の変更があると実行を拒否する
 - `adev` / `aadm` - AWS SSO ログインショートカット
 - `ls`, `ll`, `la`, `tree` - eza 版（アイコン/git 連携付き）
 - `Ctrl+g` - ghq+fzf でリポジトリ選択・移動
+
+## Git管理・復旧
+
+新しいcloneでは `bash scripts/install-git-hooks.sh` でコミット前検査を有効にする。変更前後に `nix flake check` を実行する。秘密情報の混入防止・暗号化バックアップ・配布終了に備えたキャッシュの手順は `docs/recovery.md` を参照。

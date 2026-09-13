@@ -9,6 +9,16 @@
 let
   claudeCodePkg = inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
+  # 両方の activation で同じ安全な JSON 更新処理を使用する。
+  updateClaudeJson = pkgs.writeShellApplication {
+    name = "update-claude-json";
+    runtimeInputs = [
+      pkgs.jq
+      pkgs.coreutils
+    ];
+    text = builtins.readFile ./scripts/update-claude-json.sh;
+  };
+
   # ステータスライン用スクリプト
   claudeStatuslineScript = pkgs.writeShellScript "claude-statusline" ''
     input=$(cat)
@@ -168,24 +178,9 @@ in
       "args": ["--executable-path", "/etc/profiles/per-user/${username}/bin/google-chrome-stable"]
     }')
 
-    # 新規環境では ~/.claude.json が無く、また壊れた JSON だと後段の jq が失敗して
-    # activation 全体（set -e）が落ちる。妥当性を検証して駄目なら作り直す
-    # （ファイルが無いケースもこの検証で一緒に吸収できる）。
-    if ! ${pkgs.jq}/bin/jq -e . "$CLAUDE_JSON" >/dev/null 2>&1; then
-      echo '{}' > "$CLAUDE_JSON"
-    fi
-
-    # すでに期待どおりなら書き込まない。
-    # ~/.claude.json は Claude Code 自身が実行中に更新するファイルなので、
-    # rebuild のたびに読んで書き戻すと「読み込み〜mv の間に Claude Code が
-    # 書いた内容」を取りこぼす（mv 自体は原子的でも、read-modify-write 全体は
-    # そうではない）。書き込みを実際に変更が要るときだけに絞れば、
-    # 通常の rebuild ではこの窓が発生しない。
-    if ! ${pkgs.jq}/bin/jq -e --argjson want "$DESIRED" \
-        '.mcpServers.playwright == $want' "$CLAUDE_JSON" >/dev/null 2>&1; then
-      ${pkgs.jq}/bin/jq --argjson want "$DESIRED" '.mcpServers.playwright = $want' \
-        "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
-    fi
+    # 破損時は退避して元のファイルを維持。run で HM の dry-run も尊重する。
+    run ${updateClaudeJson}/bin/update-claude-json \
+      "$CLAUDE_JSON" '["mcpServers","playwright"]' "$DESIRED"
   '';
 
   home.activation.claudeStatusLine = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -197,21 +192,7 @@ in
       "padding": 0
     }')
 
-    # .claudeディレクトリが存在しない場合は作成
-    mkdir -p "$HOME/.claude"
-
-    # 壊れた JSON だと後段の jq が失敗し activation 全体（set -e）が落ちるため、
-    # 妥当性を検証して駄目なら作り直す（未作成のケースもこれで吸収できる）。
-    if ! ${pkgs.jq}/bin/jq -e . "$SETTINGS_FILE" >/dev/null 2>&1; then
-      echo '{}' > "$SETTINGS_FILE"
-    fi
-
-    # statusLine設定を追加/更新（既存の設定は保持）。
-    # 上の claudeMcpConfig と同じ理由で、差分があるときだけ書き込む。
-    if ! ${pkgs.jq}/bin/jq -e --argjson want "$DESIRED_STATUSLINE" \
-        '.statusLine == $want' "$SETTINGS_FILE" >/dev/null 2>&1; then
-      ${pkgs.jq}/bin/jq --argjson want "$DESIRED_STATUSLINE" '.statusLine = $want' \
-        "$SETTINGS_FILE" > "$SETTINGS_FILE.tmp" && mv "$SETTINGS_FILE.tmp" "$SETTINGS_FILE"
-    fi
+    run ${updateClaudeJson}/bin/update-claude-json \
+      "$SETTINGS_FILE" '["statusLine"]' "$DESIRED_STATUSLINE"
   '';
 }

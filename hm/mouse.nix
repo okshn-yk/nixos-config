@@ -29,7 +29,11 @@ let
   # 近づけるため無効のままにする（scroll-wheel-resolution=False）。
   applySettings = pkgs.writeShellApplication {
     name = "solaar-apply-settings";
-    runtimeInputs = [ pkgs.solaar ];
+    runtimeInputs = [
+      pkgs.solaar
+      pkgs.systemd
+      pkgs.gnugrep
+    ];
     text = ''
       dev="MX Master 4"
       conf="''${XDG_CONFIG_HOME:-$HOME/.config}/solaar/config.yaml"
@@ -38,7 +42,21 @@ let
       # 設定はデーモンの起動時／デバイス接続時に config.yaml から読み込まれるため、
       # 「止める → 設定 → 検証 → 起動」の順で行う。
       echo "Stopping solaar daemon ..."
-      systemctl --user stop solaar.service || true
+      # 設定失敗・Ctrl+C・TERM でも再起動を試み、元の終了コードを保持する。
+      # SIGKILLや電源断はtrapできない。再起動自体の失敗も成功扱いにしない。
+      restart_solaar() {
+        local status=$?
+        trap - EXIT INT TERM
+        if ! systemctl --user start solaar.service; then
+          echo "Solaarの再起動に失敗しました。systemctl --user start solaar.service を再実行してください。" >&2
+          status=1
+        fi
+        exit "$status"
+      }
+      trap restart_solaar EXIT
+      trap 'exit 130' INT
+      trap 'exit 143' TERM
+      systemctl --user stop solaar.service
 
       # 選択肢型の設定は必ず「名前」で指定すること。
       # solaar の select_choice() は裸の整数を渡すと choices[N-1] を引くが、
@@ -115,6 +133,7 @@ let
       echo
       echo "Starting solaar daemon ..."
       systemctl --user start solaar.service
+      trap - EXIT INT TERM
 
       echo
       if [ "$failed" -ne 0 ]; then

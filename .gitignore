@@ -17,3 +17,22 @@ secrets/
 *.private
 id_rsa
 id_ed25519
+
+# Local credentials and environment files (templates may be committed)
+.env
+.env.*
+!.env.example
+!.env.sample
+credentials.json
+credentials*.json
+*.pem
+*.p12
+*.pfx
+**/age/keys.txt
+
+# Editor / Home Manager recovery copies and local backups
+*.hm-bak
+*.invalid.*
+*.snapshot.*
+/backups/
+/recovery-cache/
