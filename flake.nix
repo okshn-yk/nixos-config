@@ -171,10 +171,10 @@
           nixfmt
           nixd
           nix-search-cli
-          pkgs.gitleaks
+          gitleaks
           repoPython
-          pkgs.restic
-          pkgs.shellcheck
+          restic
+          shellcheck
         ];
       };
 
