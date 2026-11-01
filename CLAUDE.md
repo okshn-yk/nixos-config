@@ -125,12 +125,16 @@ sops-nix と age 暗号化を使用。`secrets.yaml`に保存し、SSH ホスト
 
 ピン留めの置き場所は消費者の広さで決める。複数モジュールから参照するものは `flake.nix` の overlay、単一ファイルからしか使わないものは利用箇所の `let` 束縛に置き、システム全体の overlay を増やさない。
 
-**現在アクティブなピンは無し。override は VS Code の terraform 拡張と、Solaar の依存を足す overlay（下記）のみ。**
+**2026-10-24 のCVE対応でnixpkgsを修正済みコミットに一時固定 → 2026-11-01 に `nixos-unstable` へ復帰済み。追加修正は `pkgs/security-overrides.nix` を参照。その他のoverrideは以下の通り。**
+
+- **CVE対応**: ~~`flake.nix` のnixpkgs固定~~（Chrome・Firefox・Electron・Goの修正の先行取得）は **2026-11-01 に解除済み**（`nixos-unstable` が固定コミット `a242b3b` を含んだため）。Brotli・Node.js・libsndfile・互換libxml2/libjxl・CUPS・CA証明書・Python依存の追加修正は `configs/security.nix` の `system.replaceDependencies` で最終closureへ適用する（一時的なABI互換の差し替え）。`services.pipewire.alsa.support32Bit` が i686 版を引き込むため、brotli・libsndfile は `pkgsi686Linux` 側も差し替える（漏れると旧版が closure に残る）。Slackはoverlayで更新する。Pythonはビルド用ツールへ波及させない独立scopeで検証する。GitPythonのストア名は差し替えの同一長制約で旧名を保持するため、実際の版はdist-info/METADATAで確認する。上流定義の追従後、該当overrideと差し替えを削除し、ビルド・回帰テスト・最終closureのCVE再監査を行う。`pkgs.*.version` だけでは差し替え後の実体を確認できないので、`system.build.toplevel` の依存先も確認する。
 
 - **hashicorp.terraform (VS Code 拡張)**: nixpkgs が 2.40.0 に記録した src ハッシュが実際の配信物と食い違いビルド不能。`hm/vscode.nix` で実測値へ上書きする。`ext.version == "2.40.0"` の条件式でガードしてあるので、**バージョンが上がれば自動的に素の派生へ戻る**。
 - **blesh**: ~~ピン留め中~~ → **2026-07-25 に解除済み**。`0.4.0-devel4+6cffa91`（2026-06-21 nightly）の回帰で Ghostty で文字入力不能になっていたが、nixpkgs が別コミット（`d69e4d5`, 2026-07-11）へ前進したため解除。**再発時の再ピン留め手順は `docs/blesh-pin.md` 参照**。blesh が上がった際は Ghostty で新規ターミナルを開いて入力確認すること。
 - **checkov**: ~~ピン留め + `dontCheckRuntimeDeps` override~~ → **2026-08-26 に両方とも解除済み**。nixpkgs `e2587ca`（2026-07-23）以降で依存の `pycep-parser` / `policy-sentry` が `pythonMetadataCheckPhase` に失敗しビルド不能だったため専用 input `nixpkgs-checkov` で固定していたが、checkov 3.3.9 が素の nixpkgs でビルドできることを確認して input・`checkovPinned` 束縛・override をすべて撤去した。再発したときの再ピン留め用に確認コマンドを下に残す。
 - **Solaar**: ~~1.1.20 への版上げ overlay~~ → **2026-08-26 に版の上書きのみ解除済み**。nixpkgs が 1.1.20 に追いついたため `version` / `src` を削除した。`flake.nix` の overlay 自体は残るが、役割は **`pycairo` と `libnotify` の追加**だけ（どちらも nixpkgs 側の派生に入っていない）。この 2 つが上流に入ったら overlay ごと削除できる。
+- **mozc**: ~~`configs/desktop.nix` の `postPatch` override~~ → **2026-11-01 に解除済み**。Qt 6.12 の `uic` が `dictionary_tool.ui` の先頭 `::` 付きクラス名を拒否してビルド不能だったが、上流の fcitx5-mozc 3.35.6354 では解消（Hydra でビルド済み）し、override の置換対象ファイルが無くなってビルドを止めていたため撤去した。
+- **checkov**（`hm/apps.nix` の `let`）: **2026-10-24 から**。依存の `bc-detect-secrets` 1.5.52 で `TestScanDiff` の 2 件が unidiff 1.0.1 の厳格化により落ちるため、その 2 件だけ `disabledTestPaths` で外す。解除判定は下の checkov 確認コマンド。
 
 ピン解除可否の確認（`nix flake update` 後に実行）:
 

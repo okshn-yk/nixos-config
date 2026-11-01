@@ -1,5 +1,26 @@
 { pkgs, ... }:
 
+let
+  # checkov: 依存の bc-detect-secrets 1.5.52 のテストが unidiff 1.0.1 の厳格化で 2 件落ちてビルド不能
+  # （TestScanDiff のフィクスチャの diff が "Target without source: +++ b/.secrets.baseline" で
+  # 拒否される。nixpkgs 02c087f, 2026-10-20 で確認）。他の 1173 件は通るので、その 2 件だけ外す。
+  # bc-detect-secrets を引き込むのは checkov だけなので checkov の dependencies 内で差し替える。
+  # 解除条件: 素の nixpkgs で checkov がビルドできたら（CLAUDE.md の確認コマンド参照）。
+  checkov = pkgs.checkov.overridePythonAttrs (old: {
+    dependencies = map (
+      dep:
+      if (dep.pname or "") == "bc-detect-secrets" then
+        dep.overridePythonAttrs (o: {
+          disabledTestPaths = (o.disabledTestPaths or [ ]) ++ [
+            "tests/core/secrets_collection_test.py::TestScanDiff::test_filename_filters_are_invoked_first"
+            "tests/core/secrets_collection_test.py::TestScanDiff::test_success"
+          ];
+        })
+      else
+        dep
+    ) old.dependencies;
+  });
+in
 {
   # ===========================================================================
   # Packages & GNOME Integration
@@ -23,7 +44,7 @@
     btop
 
     # Security Scanning
-    checkov # IaC セキュリティスキャン（Terraform, Dockerfile等）
+    checkov # IaC セキュリティスキャン（Terraform, Dockerfile等）。上の let で bc-detect-secrets を上書き
     trivy # コンテナ・ファイルシステム脆弱性スキャン
 
     # IaC Tools

@@ -1,0 +1,2 @@
+# Unified diffの空行コンテキストは空白1文字を必要とする。
+/pkgs/patches/*.patch whitespace=-blank-at-eol,-blank-at-eof

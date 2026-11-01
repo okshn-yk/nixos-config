@@ -82,6 +82,7 @@
           ({ ... }: {
             nixpkgs.overlays = [
               rust-overlay.overlays.default
+              (import ./pkgs/security-overrides.nix)
 
               # Solaar に不足している実行時依存を足す overlay。
               # overlay に置くのは configs/mouse.nix と hm/mouse.nix の両方から
