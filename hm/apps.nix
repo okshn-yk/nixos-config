@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 
 let
   # checkov: 依存の bc-detect-secrets 1.5.52 のテストが unidiff 1.0.1 の厳格化で 2 件落ちてビルド不能
@@ -65,6 +65,39 @@ in
     # （configuration.nix）で入る。本体・D-Bus activation・gsettings schema を
     # 上流オプションがまとめて面倒みるため、ここでは何も入れない。
   ];
+
+  # 日本語音声入力。GNOME のショートカットで録音を切り替える。
+  # キー入力の合成は使わず、認識結果をコピーして好きな入力欄へ貼り付ける。
+  services.voxtype = {
+    enable = true;
+    # 通常版は CPU のみ。Whisper Small の認識を AMD 内蔵 GPU にオフロードする。
+    # ROCm ではなく Mesa/RADV 経由の Vulkan を使用。
+    package = pkgs.voxtype.override { vulkanSupport = true; };
+    loadModels = [ "small" ]; # 多言語版（small.en は英語専用）
+    settings = {
+      state_file = "auto";
+      hotkey.enabled = false; # evdev ではなく GNOME のカスタムキーを使用
+      audio = {
+        device = "default";
+        max_duration_secs = 60;
+      };
+      whisper = {
+        mode = "local";
+        model = "small";
+        language = "ja";
+        translate = false;
+        on_demand_loading = true; # 録音開始時に読み込み、認識後に解放
+      };
+      output = {
+        mode = "clipboard";
+        notification = {
+          on_recording_start = true;
+          on_recording_stop = true;
+          on_transcription = true;
+        };
+      };
+    };
+  };
 
   # GPaste デーモンをログイン時から常駐させる。
   # gpaste パッケージは user unit (Type=dbus, BusName=org.gnome.GPaste) を同梱し、
@@ -135,9 +168,16 @@ in
     };
 
     # カスタムショートカットの登録
+    "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/voxtype" = {
+      name = "Voxtype: 日本語音声入力";
+      command = "${config.services.voxtype.package}/bin/voxtype record toggle";
+      binding = "<Super><Shift>v";
+    };
+
     "org/gnome/settings-daemon/plugins/media-keys" = {
       custom-keybindings = [
         "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/"
+        "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/voxtype/"
       ];
     };
 
