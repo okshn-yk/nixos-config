@@ -58,7 +58,7 @@ in
     # ChatGPT デスクトップ（ChatGPT / Work / Codex 統合）。nixpkgs の chatgpt は macOS 専用のため
     # 自前の pkgs/chatgpt.nix を flake.nix の overlay で pkgs.chatgpt に差し替えている
     chatgpt
-    gnomeExtensions.appindicator
+    # GNOME Shell 拡張は hm/autostart.nix の programs.gnome-shell で管理
 
     # クリップボードマネージャ（GPaste）はシステム側の programs.gpaste.enable
     # （configuration.nix）で入る。本体・D-Bus activation・gsettings schema を

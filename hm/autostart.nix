@@ -78,26 +78,34 @@ let
   };
 in
 {
-  # --- 0. 依存パッケージ (拡張機能) のインストール ---
-  home.packages = with pkgs; [
-    gnomeExtensions.auto-move-windows
-  ];
+  # --- 0. GNOME Shell 拡張（インストールと有効化） ---
+  # programs.gnome-shell が home.packages への追加と、パッケージの extensionUuid から
+  # 導出した enabled-extensions、disable-user-extensions = false の設定をまとめて行う。
+  # （disable-user-extensions が true だと拡張は INITIALIZED 止まりで起動しない）
+  # ここに無い拡張は GNOME の「拡張機能」アプリで有効化しても次の activation で外れる。
+  programs.gnome-shell = {
+    enable = true;
+    extensions = [
+      # トレイアイコン（Solaar / Slack 等）
+      { package = pkgs.gnomeExtensions.appindicator; }
+      # ワークスペース割当。これが無いと下の割当ルールは一切効かない。
+      # gnomeExtensions.auto-move-windows（extensions.gnome.org 版）は使わない。
+      # 最新版の shell-version しか宣言しないことがあり、GNOME Shell と版がずれると
+      # OUT OF DATE で読み込まれず割当が黙って無効になる（2026-11: 51 用の版が入り Shell 50.4 で不動作）。
+      # gnome-shell 本体と同じ nixpkgs で版が揃う公式バンドルから UUID を指定して使う。
+      {
+        id = "auto-move-windows@gnome-shell-extensions.gcampax.github.com";
+        package = pkgs.gnome-shell-extensions;
+      }
+    ];
+  };
 
   # --- 1. ウィンドウ配置ルール (Workspace Assignment) ---
   dconf.settings = {
-    # auto-move-windows 拡張を有効化（これが無いと割当ルールは一切効かない）。
-    # 既存の appindicator と併記する。
     "org/gnome/shell" = {
-      # ユーザー拡張の全体無効化フラグ。true だと enabled-extensions に
-      # 登録しても拡張が INITIALIZED 止まりで起動しない。明示的に false にする。
-      disable-user-extensions = false;
       # 実ユーザーが1人だと GNOME は電源メニューの「ログアウト」を隠す。
       # 常に表示させる。
       always-show-log-out = true;
-      enabled-extensions = [
-        "appindicatorsupport@rgcjonas.gmail.com"
-        "auto-move-windows@gnome-shell-extensions.gcampax.github.com"
-      ];
     };
 
     # 固定ワークスペースにして WS1〜WS4 を常設する。
