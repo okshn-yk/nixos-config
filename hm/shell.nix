@@ -1,4 +1,9 @@
-{ pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   # CLI Tools Package
@@ -12,10 +17,11 @@
     enable = true;
     enableCompletion = true;
     shellAliases = {
-      # eza
-      ls = "eza --icons --git";
-      ll = "eza -hl --icons --git";
-      la = "eza -hla --icons --git";
+      # eza: ls / lt / lla と、--icons auto --git 付きの eza 自身は
+      # programs.eza の Bash 連携が定義する（bash は別名の先頭語も展開するので、
+      # 下の "eza ..." にも icons / git が自動で付く）。ここはヘッダ行(-h)付きにしたい分だけ上書き。
+      ll = "eza -hl";
+      la = "eza -hla";
       tree = "eza --tree";
       # fd (隠しファイル込み検索)
       fdh = "fd --hidden --no-ignore";
@@ -122,7 +128,8 @@
       [[ ''${BLE_VERSION-} ]] && ble-import contrib/fzf-key-bindings
 
       # zoxide 初期化（ble-attach の直前に配置）
-      eval "$(zoxide init bash --cmd cd)"
+      # 引数は programs.zoxide.options に一本化（Bash 連携を切っているので自前で渡す）
+      eval "$(${lib.getExe config.programs.zoxide.package} init bash ${lib.escapeShellArgs config.programs.zoxide.options})"
 
       # ble.sh アタッチ（最後に実行）
       [[ ''${BLE_VERSION-} ]] && ble-attach
@@ -138,7 +145,10 @@
   programs.zoxide = {
     enable = true;
     enableBashIntegration = false; # 手動で初期化するため無効化（ble.sh との順序問題回避）
-    options = [ "--cmd cd" ];
+    options = [
+      "--cmd"
+      "cd"
+    ];
   };
 
   programs.eza = {
