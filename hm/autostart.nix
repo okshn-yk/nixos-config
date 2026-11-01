@@ -26,11 +26,6 @@ let
       delay = 3; # WS2
       desc = "Visual Studio Code";
     };
-    zed = {
-      exec = "${pkgs.zed-editor}/bin/zeditor";
-      delay = 4; # WS3
-      desc = "Zed editor";
-    };
     obsidian = {
       exec = "${pkgs.obsidian}/bin/obsidian";
       delay = 5; # WS3
@@ -48,20 +43,22 @@ let
   # ログアウト時に停止する。`systemctl --user status <name>` / `journalctl --user -u <name>`
   # で起動失敗とログを追跡でき、異常終了時は自動再起動する。
   #
-  # 既知の障害モード: zed/vscode 等の単一インスタンス型アプリは、数日間の
+  # 既知の障害モード: vscode 等の単一インスタンス型アプリは、数日間の
   # 連続稼働（特にサスペンド/レジューム跨ぎ）で GPU/Wayland コンテキストが
   # 壊れ、既存プロセスが応答しなくなることがある。ExecStart はフォーク型
   # ランチャで即 exit 0 するため、この種のハングは Restart=on-failure では
   # 検知できない（プロセス自体は "起動失敗" しないため）。
   # 症状: アイコン/CLI から起動してもウィンドウが出ない。
-  # 対処: `systemctl --user restart <name>.service`（例: zed.service）で
-  # 強制再起動する。nixos-rebuild 直後は home-manager が変更のあった
-  # unit を自動再起動するが、それでも直らない場合は上記を手動実行する。
+  # 対処: `systemctl --user restart <name>.service`（例: vscode.service）で
+  # 作業を保存してから手動で再起動する。
   mkService = _name: app: {
     Unit = {
       Description = "${app.desc} (autostart)";
       After = [ "graphical-session.target" ];
       PartOf = [ "graphical-session.target" ];
+      # 更新時に作業中の GUI アプリを停止・再起動しない。
+      # 新版は次回ログイン時、または手動でサービスを再起動したときに起動する。
+      X-SwitchMethod = "keep-old";
     };
     Service = {
       Type = "simple";
@@ -125,7 +122,7 @@ in
         "com.mitchellh.ghostty.desktop:2" # WS 2: ターミナル
         "code.desktop:2" # WS 2: コード
         "chatgpt.desktop:2" # WS 2: AI アシスタント
-        "dev.zed.Zed.desktop:3" # WS 3: エディタ
+        "dev.zed.Zed.desktop:3" # WS 3: エディタ（必要時に手動起動）
         "obsidian.desktop:3" # WS 3: ノート
         "slack.desktop:4" # WS 4: チャット
       ];
