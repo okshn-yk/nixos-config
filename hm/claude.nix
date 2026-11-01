@@ -20,86 +20,87 @@ let
   };
 
   # ステータスライン用スクリプト
-  claudeStatuslineScript = pkgs.writeShellScript "claude-statusline" ''
-    input=$(cat)
+  # 入力 JSON から必要な値を jq 1 回でまとめて取り出す（以前は描画ごとに jq を 9 回起動していた）。
+  # 区切りは US(0x1f)。タブだと IFS の空白扱いで空欄が詰められ、列がずれる。
+  claudeStatusline = pkgs.writeShellApplication {
+    name = "claude-statusline";
+    runtimeInputs = [
+      pkgs.jq
+      pkgs.git
+      pkgs.coreutils
+    ];
+    text = ''
+      RESET=$'\033[0m'
 
-    RESET="\033[0m"
+      # 使用率(0-100)に応じたANSI色を返す（80%以上:赤, 50%以上:黄, それ以下:緑）
+      pct_color() {
+          if [ "$1" -ge 80 ]; then
+              printf '\033[31m'   # 赤
+          elif [ "$1" -ge 50 ]; then
+              printf '\033[33m'   # 黄
+          else
+              printf '\033[32m'   # 緑
+          fi
+      }
 
-    # 使用率(0-100)に応じたANSI色を返す（80%以上:赤, 50%以上:黄, それ以下:緑）
-    pct_color() {
-        if [ "$1" -ge 80 ]; then
-            printf '\033[31m'   # 赤
-        elif [ "$1" -ge 50 ]; then
-            printf '\033[33m'   # 黄
-        else
-            printf '\033[32m'   # 緑
-        fi
-    }
+      # $1: resets_at (Unix epoch秒) → "→HH:MM" のローカル時刻。無効なら空。
+      # 小数（例 1787699103.5）で来ることがあるため、比較前に整数部だけを取り出す。
+      fmt_reset() {
+          local ts=''${1%%.*}
+          if [[ $ts =~ ^[0-9]+$ ]] && [ "$ts" -gt 0 ]; then
+              printf '→%s' "$(date -d "@$ts" +%H:%M 2>/dev/null)"
+          fi
+      }
 
-    # モデル名を取得
-    MODEL=$(echo "$input" | ${pkgs.jq}/bin/jq -r '.model.display_name')
+      # current_usage が無いときは使用トークン数を -1 にして「未取得」を表す。
+      # rate_limits は Claude.ai サブスク(Pro/Max)で最初のAPI応答後にのみ出現する。
+      IFS=$'\x1f' read -r MODEL CONTEXT_SIZE CURRENT_TOKENS FIVE_H FIVE_RESET WEEK WEEK_RESET < <(
+          jq -r '[
+              (.model.display_name // "?"),
+              (.context_window.context_window_size // 0),
+              (.context_window.current_usage
+                  | if . == null then -1
+                    else (.input_tokens // 0) + (.cache_creation_input_tokens // 0) + (.cache_read_input_tokens // 0)
+                    end),
+              (.rate_limits.five_hour.used_percentage // ""),
+              (.rate_limits.five_hour.resets_at // ""),
+              (.rate_limits.seven_day.used_percentage // ""),
+              (.rate_limits.seven_day.resets_at // "")
+          ] | map(tostring) | join("\u001f")'
+      )
 
-    # Gitブランチを取得
-    GIT_BRANCH=""
-    if ${pkgs.git}/bin/git rev-parse --git-dir > /dev/null 2>&1; then
-        BRANCH=$(${pkgs.git}/bin/git branch --show-current 2>/dev/null)
-        if [ -n "$BRANCH" ]; then
-            GIT_BRANCH=" [$BRANCH]"
-        fi
-    fi
+      # Gitブランチ（リポジトリ外・detached HEAD では表示しない）
+      GIT_BRANCH=""
+      BRANCH=$(git branch --show-current 2>/dev/null || true)
+      if [ -n "$BRANCH" ]; then
+          GIT_BRANCH=" [$BRANCH]"
+      fi
 
-    # コンテキストウィンドウ情報を取得
-    CONTEXT_SIZE=$(echo "$input" | ${pkgs.jq}/bin/jq -r '.context_window.context_window_size')
-    USAGE=$(echo "$input" | ${pkgs.jq}/bin/jq '.context_window.current_usage')
+      if [ "$CURRENT_TOKENS" -ge 0 ] && [ "$CONTEXT_SIZE" -gt 0 ]; then
+          PERCENT_USED=$((CURRENT_TOKENS * 100 / CONTEXT_SIZE))
+          CONTEXT_STR="Ctx: $(pct_color "$PERCENT_USED")''${PERCENT_USED}%''${RESET} (''${CURRENT_TOKENS}/''${CONTEXT_SIZE})"
+      else
+          CONTEXT_STR="Ctx: 0%"
+      fi
 
-    if [ "$USAGE" != "null" ] && [ "$CONTEXT_SIZE" != "null" ] && [ "$CONTEXT_SIZE" != "0" ]; then
-        # 現在のトークン数を計算
-        INPUT_TOKENS=$(echo "$USAGE" | ${pkgs.jq}/bin/jq -r '.input_tokens // 0')
-        CACHE_CREATE=$(echo "$USAGE" | ${pkgs.jq}/bin/jq -r '.cache_creation_input_tokens // 0')
-        CACHE_READ=$(echo "$USAGE" | ${pkgs.jq}/bin/jq -r '.cache_read_input_tokens // 0')
+      LIMITS=""
+      if [ -n "$FIVE_H" ]; then
+          FIVE_H_INT=$(printf '%.0f' "$FIVE_H")
+          LIMITS="5h: $(pct_color "$FIVE_H_INT")''${FIVE_H_INT}%''${RESET}$(fmt_reset "$FIVE_RESET")"
+      fi
+      if [ -n "$WEEK" ]; then
+          WEEK_INT=$(printf '%.0f' "$WEEK")
+          WEEK_STR="7d: $(pct_color "$WEEK_INT")''${WEEK_INT}%''${RESET}$(fmt_reset "$WEEK_RESET")"
+          LIMITS="''${LIMITS:+$LIMITS }''${WEEK_STR}"
+      fi
 
-        CURRENT_TOKENS=$((INPUT_TOKENS + CACHE_CREATE + CACHE_READ))
-        PERCENT_USED=$((CURRENT_TOKENS * 100 / CONTEXT_SIZE))
-        CTX_COLOR=$(pct_color "$PERCENT_USED")
-        CONTEXT_STR="Ctx: ''${CTX_COLOR}''${PERCENT_USED}%''${RESET} (''${CURRENT_TOKENS}/''${CONTEXT_SIZE})"
-    else
-        CONTEXT_STR="Ctx: 0%"
-    fi
-
-    # 利用状況（5h / weekly のレート制限）を取得
-    # ※ rate_limits は Claude.ai サブスク(Pro/Max)で最初のAPI応答後にのみ出現する。
-    #   未取得の場合はセクションごと非表示にする。
-    fmt_reset() {
-        # $1: resets_at (Unix epoch秒) → "→HH:MM" のローカル時刻。無効なら空。
-        # 小数（例 1787699103.5）で来ることがあり、そのまま [ -gt ] に渡すと
-        # 「integer expression expected」で失敗する。2>/dev/null に握り潰されて
-        # リセット時刻だけが黙って消えるため、比較前に整数部だけを取り出す。
-        local ts=''${1%%.*}
-        if [ -n "$ts" ] && [ "$ts" != "null" ] && [ "$ts" -gt 0 ] 2>/dev/null; then
-            printf '→%s' "$(${pkgs.coreutils}/bin/date -d "@$ts" +%H:%M 2>/dev/null)"
-        fi
-    }
-
-    LIMITS=""
-    FIVE_H=$(echo "$input" | ${pkgs.jq}/bin/jq -r '.rate_limits.five_hour.used_percentage // empty')
-    if [ -n "$FIVE_H" ]; then
-        FIVE_H_INT=$(printf '%.0f' "$FIVE_H")
-        FIVE_RESET=$(echo "$input" | ${pkgs.jq}/bin/jq -r '.rate_limits.five_hour.resets_at // empty')
-        LIMITS="5h: $(pct_color "$FIVE_H_INT")''${FIVE_H_INT}%''${RESET}$(fmt_reset "$FIVE_RESET")"
-    fi
-
-    WEEK=$(echo "$input" | ${pkgs.jq}/bin/jq -r '.rate_limits.seven_day.used_percentage // empty')
-    if [ -n "$WEEK" ]; then
-        WEEK_INT=$(printf '%.0f' "$WEEK")
-        WEEK_RESET=$(echo "$input" | ${pkgs.jq}/bin/jq -r '.rate_limits.seven_day.resets_at // empty')
-        WEEK_STR="7d: $(pct_color "$WEEK_INT")''${WEEK_INT}%''${RESET}$(fmt_reset "$WEEK_RESET")"
-        LIMITS="''${LIMITS:+$LIMITS }''${WEEK_STR}"
-    fi
-
-    LINE="[$MODEL]''${GIT_BRANCH} ''${CONTEXT_STR}"
-    [ -n "$LIMITS" ] && LINE="''${LINE} | ''${LIMITS}"
-    echo -e "$LINE"
-  '';
+      LINE="[$MODEL]''${GIT_BRANCH} ''${CONTEXT_STR}"
+      if [ -n "$LIMITS" ]; then
+          LINE="''${LINE} | ''${LIMITS}"
+      fi
+      printf '%s\n' "$LINE"
+    '';
+  };
 in
 {
   # ===========================================================================
@@ -157,7 +158,7 @@ in
   # Nix storeからシンボリックリンクを作成
   # ===========================================================================
   home.file.".claude/statusline.sh" = {
-    source = claudeStatuslineScript;
+    source = lib.getExe claudeStatusline;
     executable = true;
   };
 
