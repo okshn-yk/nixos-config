@@ -75,6 +75,8 @@
       "xmind"
       "google-chrome"
       "chatgpt" # pkgs/chatgpt.nix（公式 Linux 版 .deb の自前パッケージ）
+      "kiro-cli" # hm/apps.nix（Kiro Crew の土台）
+      "kiro-cli-unwrapped" # 同上（kiro-cli ラッパーの中身）
     ];
 
   # 一時的に許可するinsecureパッケージ

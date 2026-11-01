@@ -42,6 +42,7 @@ in
     jq
     ripgrep
     btop
+    kiro-cli # Kiro Crew（~/.kiro/crew-venv に curl で導入、Nix 管理外）の土台
 
     # Security Scanning
     checkov # IaC セキュリティスキャン（Terraform, Dockerfile等）。上の let で bc-detect-secrets を上書き
