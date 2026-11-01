@@ -49,6 +49,10 @@
     substituters = [ "https://nix-community.cachix.org" ];
     trusted-public-keys = [ "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=" ];
   };
+  # flake 専用にし、nix-channel を無効化する。root に古い nixos チャンネルが残り、
+  # NIX_PATH 経由で <nixos> 等が flake と無関係なツリーを指していたため。
+  # <nixpkgs> は引き続き flake の nixpkgs（nix.nixPath の nixpkgs=flake:nixpkgs）へ解決される。
+  nix.channel.enable = false;
   nix.gc = {
     automatic = true;
     dates = "weekly";
