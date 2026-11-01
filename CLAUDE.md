@@ -73,11 +73,11 @@ nix develop
 
 ### 自前パッケージ (`pkgs/`)
 
-nixpkgs に無い（または Linux 向けが無い）ものを `callPackage` 形式で置く。利用箇所から `pkgs.callPackage ../pkgs/<name>.nix { }` で呼ぶ。新規ファイルは `git add` しないと flake から見えない。
+nixpkgs に無い（または Linux 向けが無い）ものを `callPackage` 形式で置く。単一ファイルからしか使わないものは利用箇所で `pkgs.callPackage ../pkgs/<name>.nix { }` と呼び、複数箇所から参照するものは `flake.nix` の overlay で `pkgs.<name>` として公開する（パッケージのピン留めと同じ基準）。新規ファイルは `git add` しないと flake から見えない。
 
 | ファイル                     | 内容                                                                                   |
 | ---------------------------- | -------------------------------------------------------------------------------------- |
-| `chatgpt.nix`                | ChatGPT デスクトップ（公式 Linux 版 .deb を autoPatchelf で再パッケージ）。引込み元: `hm/apps.nix` |
+| `chatgpt.nix`                | ChatGPT デスクトップ（公式 Linux 版 .deb を autoPatchelf で再パッケージ）。`flake.nix` の overlay で `pkgs.chatgpt` を差し替え。引込み元: `hm/apps.nix`・`hm/autostart.nix`・flake の `packages.chatgpt` |
 | `chatgpt-prepare-plugins.sh` | 上記のラッパーが起動前に source する処理。同梱プラグインの書き込み可能なコピーを `~/.cache/chatgpt-nix/<ストアパス名>/` に作る |
 
 ChatGPT デスクトップの注意点:

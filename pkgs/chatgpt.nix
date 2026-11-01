@@ -47,6 +47,8 @@
   nss,
   pango,
   systemd,
+  openssl,
+  tpm2-tss,
 
   # NEEDED には無いが Chromium が実行時に dlopen するもの（nixpkgs の google-chrome に準拠）
   libdrm,
@@ -68,12 +70,12 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "chatgpt";
-  version = "26.908.40834";
+  version = "26.1027.30824";
 
   # apt リポジトリの pool 配下は版付きで再現可能（latest/ の URL は中身が差し替わる）
   src = fetchurl {
     url = "https://persistent.oaistatic.com/codex-app-prod/linux/deb/pool/main/c/chatgpt/chatgpt_${finalAttrs.version}_amd64.deb";
-    hash = "sha256-2je457zvquoBnEeMrL5sc+4d3RXg4euzx+8KQt2BisI=";
+    hash = "sha256-ThOaRPfJF6ZD8t0BStMimN0wrsbTJNMjUksZD3ZnaEw=";
   };
 
   nativeBuildInputs = [
@@ -111,6 +113,9 @@ stdenv.mkDerivation (finalAttrs: {
     pango
     stdenv.cc.cc.lib # libstdc++ / libgcc_s
     systemd # libudev
+    # 26.1021 で追加された resources/native/remote-control-device-key.node（TPM によるデバイス鍵）が要求
+    openssl # libcrypto.so.3
+    tpm2-tss # libtss2-esys / libtss2-mu / libtss2-tcti-device
   ];
 
   # LD_LIBRARY_PATH ではなく RUNPATH に入れる。環境変数で渡すと、アプリ内ターミナル
@@ -182,7 +187,9 @@ stdenv.mkDerivation (finalAttrs: {
     # 呼び出しを同じ長さの空オブジェクト式に置き換えて (4) へ進ませる。asar はヘッダに
     # 各ファイルのオフセットを持つのでバイト長は変えない。整合性検証の fuse は無効
     # （EnableEmbeddedAsarIntegrityValidation=0）なので書き換えても読み込める。
-    # 件数が変わったら（上流の修正・detect-libc の更新）ビルドを止めて見直す。
+    # 26.1021 ではバンドル済みのコードと node_modules 同梱の detect-libc 本体の 2 箇所にあったが、
+    # 26.1027 でバンドル側が消え node_modules 側の 1 箇所に戻った。件数が変わったら
+    # （上流の修正・detect-libc の更新）ビルドを止めて見直す。
     asar=$out/lib/chatgpt/resources/app.asar
     count=$(grep -a -o -F 'process.report.getReport()' "$asar" | wc -l)
     if [ "$count" -ne 1 ]; then

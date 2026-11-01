@@ -17,7 +17,7 @@ let
       desc = "Ghostty terminal";
     };
     chatgpt = {
-      exec = "${pkgs.callPackage ../pkgs/chatgpt.nix { }}/bin/chatgpt";
+      exec = "${pkgs.chatgpt}/bin/chatgpt";
       delay = 2; # WS2: ブラウザ・ターミナルの起動後
       desc = "ChatGPT desktop";
     };

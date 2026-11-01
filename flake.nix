@@ -84,6 +84,13 @@
               rust-overlay.overlays.default
               (import ./pkgs/security-overrides.nix)
 
+              # 自前の ChatGPT デスクトップ（pkgs/chatgpt.nix）。nixpkgs の chatgpt は
+              # macOS 専用なので同名で差し替える。overlay に置くのは hm/apps.nix・
+              # hm/autostart.nix・下の packages.chatgpt の 3 か所から同一の派生を参照するため。
+              (final: prev: {
+                chatgpt = final.callPackage ./pkgs/chatgpt.nix { };
+              })
+
               # Solaar に不足している実行時依存を足す overlay。
               # overlay に置くのは configs/mouse.nix と hm/mouse.nix の両方から
               # 同一の派生を参照するため。
@@ -151,9 +158,7 @@
       };
 
       # 復旧用キャッシュへ独自パッケージと配布元debを保存するため公開。
-      packages.${system}.chatgpt =
-        self.nixosConfigurations.${hostName}.pkgs.callPackage ./pkgs/chatgpt.nix
-          { };
+      packages.${system}.chatgpt = self.nixosConfigurations.${hostName}.pkgs.chatgpt;
 
       # `nix fmt` で使われるフォーマッタを公開
       formatter.${system} = pkgs.nixfmt;
