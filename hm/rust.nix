@@ -26,15 +26,16 @@
     bacon # バックグラウンドでコンパイルチェック (rust-analyzerより軽い)
 
     # --- 3. Build Dependencies  ---
-    pkg-config # C言語ライブラリを探すツール
-    openssl # Web系クレート(reqwest, axum等)で必須
+    # 注意: ここに入れても C ライブラリのビルド依存にはならない。home.packages には
+    # openssl の dev 出力（ヘッダ・.pc）が入らず PKG_CONFIG_PATH も通らないため、
+    # openssl-sys 等は失敗する。必要なプロジェクトでは devShell
+    # （packages = [ pkg-config openssl ]）を用意すること。
+    pkg-config # C言語ライブラリを探すツール（Go の cgo と共用）
+    openssl # openssl コマンド（証明書の確認など）
   ];
 
-  # ===========================================================================
-  # Environment Variables
-  # VSCodeなどがRustの標準ライブラリのソースコードを見つけられるようにする
-  # ===========================================================================
-  home.sessionVariables = {
-    RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
-  };
+  # RUST_SRC_PATH は設定しない。以前は nixpkgs の rustLibSrc を指していたが、
+  # 上の rust-bin（rust-overlay）とは版が別で（例: 1.99.0 に対し 1.98.1）、
+  # rust-analyzer が古い std を読んでいた。rust-src 拡張を入れたツールチェーンなら
+  # rust-analyzer は `rustc --print sysroot` から std のソースを自分で見つける。
 }

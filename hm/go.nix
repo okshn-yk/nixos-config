@@ -16,14 +16,8 @@
     go-tools # goimports, gorename等の公式ツール群
     delve # デバッガ
 
-    # --- 3. Build Dependencies ---
-    pkg-config # C言語ライブラリを探すツール
+    # pkg-config は hm/rust.nix 側で入れている（cgo と共用）
   ];
 
-  # ===========================================================================
-  # Environment Variables
-  # ===========================================================================
-  home.sessionVariables = {
-    GOPATH = "$HOME/go";
-  };
+  # GOPATH は Go の既定値（$HOME/go）のままなので設定しない。
 }
