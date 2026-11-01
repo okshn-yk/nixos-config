@@ -2,10 +2,22 @@
 
 {
   home.packages = with pkgs; [
-    gh
     lazygit
     ghq
   ];
+
+  # gh 本体と git の認証ヘルパー。gitCredentialHelper（既定で有効）が
+  # credential."https://github.com".helper にストアパス付きの gh を登録するので、
+  # PATH 上の gh に依存しない。対象は github.com と gist.github.com。
+  # ~/.config/gh/config.yml は読み取り専用の symlink になるため、
+  # `gh alias set` / `gh config set` の変更はここへ書く。認証情報の hosts.yml は管理外。
+  programs.gh = {
+    enable = true;
+    settings = {
+      git_protocol = "https";
+      aliases.co = "pr checkout";
+    };
+  };
 
   programs.git = {
     enable = true;
@@ -17,7 +29,6 @@
       };
 
       # その他の設定
-      credential.helper = "!gh auth git-credential";
       init.defaultBranch = "main";
 
       # 通信停止検出。postBuffer は Git の既定値を使用する。
