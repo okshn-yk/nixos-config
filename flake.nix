@@ -172,6 +172,7 @@
           nixd
           nix-search-cli
           gitleaks
+          jq # scripts/ci-check.sh
           repoPython
           restic
           shellcheck
