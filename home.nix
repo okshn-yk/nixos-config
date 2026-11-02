@@ -1,4 +1,5 @@
 {
+  inputs,
   username,
   ...
 }:
@@ -6,6 +7,8 @@
 {
   # 分割したファイルをインポート
   imports = [
+    # nix-index（DB 同梱）と comma。設定は hm/shell.nix
+    inputs.nix-index-database.homeModules.nix-index
     ./hm/shell.nix
     ./hm/vscode.nix
     ./hm/zed.nix

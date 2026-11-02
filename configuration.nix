@@ -53,15 +53,28 @@
   # NIX_PATH 経由で <nixos> 等が flake と無関係なツリーを指していたため。
   # <nixpkgs> は引き続き flake の nixpkgs（nix.nixPath の nixpkgs=flake:nixpkgs）へ解決される。
   nix.channel.enable = false;
-  nix.gc = {
-    automatic = true;
-    dates = "weekly";
-    options = "--delete-older-than 7d";
+  # GC は nh に任せる（nix.gc.automatic と併用するとアサーションで止まる）。
+  # 以前の「7 日より古い世代を削除」に加え、直近 5 世代は日付に関係なく残す。
+  # nh 本体は `nh os switch` 等の日常リビルド用（flake のパスを既定にするので
+  # どのディレクトリからでも実行でき、nvd による世代間の差分も表示される）。
+  programs.nh = {
+    enable = true;
+    flake = "/home/${username}/nixos-config";
+    clean = {
+      enable = true;
+      dates = "weekly";
+      extraArgs = "--keep-since 7d --keep 5";
+    };
   };
   # ストア内の重複ファイルをハードリンク化してディスクを節約する。
   # GC が「不要な世代を消す」のに対し、こちらは「残す世代の中身を重複排除する」
   # 役割で、両者は補完関係。ルートは 438G 中 203G 使用のため効果が見込める。
   nix.optimise.automatic = true;
+
+  # NixOS 既定の command-not-found はチャンネルの programs.sqlite を前提にし、
+  # flake 専用（nix.channel.enable = false）では機能しない。nix-index 版
+  # （hm/shell.nix）に置き換えるため無効化する。
+  programs.command-not-found.enable = false;
 
   # 非フリーパッケージ許可（ホワイトリスト方式）
   nixpkgs.config.allowUnfreePredicate =

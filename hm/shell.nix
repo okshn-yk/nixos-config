@@ -16,6 +16,25 @@
   programs.bash = {
     enable = true;
     enableCompletion = true;
+
+    # 履歴: 既定 (500/1000) では数日で流れるので大きく取る。
+    # ignoreboth = 先頭スペース付き・連続重複を記録しない。erasedups で古い重複を消す。
+    # histappend は Home Manager の shellOptions 既定に含まれる。
+    # ペイン間のリアルタイム共有は ble.sh の history_share（initExtra）で行う。
+    historySize = 100000;
+    historyFileSize = 200000;
+    historyControl = [
+      "ignoreboth"
+      "erasedups"
+    ];
+    historyIgnore = [
+      "ls"
+      "ll"
+      "la"
+      "exit"
+      "clear"
+    ];
+
     shellAliases = {
       # eza: ls / lt / lla と、--icons auto --git 付きの eza 自身は
       # programs.eza の Bash 連携が定義する（bash は別名の先頭語も展開するので、
@@ -35,6 +54,9 @@
     initExtra = ''
       # ble.sh 初期化（最初に読み込む）
       [[ $- == *i* ]] && source "${pkgs.blesh}/share/blesh/ble.sh" --noattach
+
+      # 複数の Ghostty / tmux ペイン間で履歴をコマンド実行ごとに共有する
+      [[ ''${BLE_VERSION-} ]] && bleopt history_share=1
 
       # ===========================================================================
       # Ghostty テーマ動的切り替え（Claude/Codex 視認性向上）
@@ -131,6 +153,9 @@
       # 引数は programs.zoxide.options に一本化（Bash 連携を切っているので自前で渡す）
       eval "$(${lib.getExe config.programs.zoxide.package} init bash ${lib.escapeShellArgs config.programs.zoxide.options})"
 
+      # direnv フック（zoxide と同じ理由で手動。ble-attach より前に置く）
+      eval "$(${lib.getExe config.programs.direnv.package} hook bash)"
+
       # ble.sh アタッチ（最後に実行）
       [[ ''${BLE_VERSION-} ]] && ble-attach
     '';
@@ -150,6 +175,22 @@
       "cd"
     ];
   };
+
+  # direnv + nix-direnv: `.envrc` に `use flake` と書けば cd で devShell を自動ロード。
+  # nix-direnv が評価結果をキャッシュし GC ルートも張るので、2 回目以降は即時。
+  # 新しい .envrc は `direnv allow` で許可する。
+  programs.direnv = {
+    enable = true;
+    enableBashIntegration = false; # 手動で初期化するため無効化（ble.sh との順序問題回避）
+    nix-direnv.enable = true;
+    silent = true; # cd のたびの export 一覧を出さない
+  };
+
+  # nix-index（nix-index-database の DB 同梱版。モジュールは home.nix で import）。
+  # 未インストールのコマンドを打つと、それを含むパッケージを提示する。
+  # comma: `, cowsay` で未インストールのコマンドをその場で一時実行する。
+  programs.nix-index.enable = true;
+  programs.nix-index-database.comma.enable = true;
 
   programs.eza = {
     enable = true;

@@ -41,6 +41,11 @@
     # sops-nix
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+
+    # nix-index の週次ビルド済みDB。command-not-found と comma（`, <cmd>`）が使う。
+    # 自前で nix-index を回す（数十分かかる）代わりに配布物を取り込む。引込み元: home.nix
+    nix-index-database.url = "github:nix-community/nix-index-database";
+    nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =

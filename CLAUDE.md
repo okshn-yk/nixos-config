@@ -11,6 +11,8 @@ NixOS Flake ベースの個人ワークステーション設定（ユーザー: 
 ```bash
 # 設定を反映（リビルド＆切り替え）
 sudo nixos-rebuild switch --flake .
+# nh 経由（どこからでも可。ビルドのツリー表示と世代間のパッケージ差分付き）
+nh os switch
 
 # 全Flake入力を更新
 nix flake update
@@ -34,7 +36,7 @@ nix develop
 
 ### Flake 構成
 
-- `flake.nix` - エントリポイント。入力定義（nixpkgs unstable, home-manager, xremap, sops-nix, claude-code-nix, rust-overlay）
+- `flake.nix` - エントリポイント。入力定義（nixpkgs unstable, home-manager, xremap, sops-nix, claude-code-nix, codex-cli-nix, rust-overlay, nix-index-database）
 - `configuration.nix` - システムレベル設定。`configs/`からモジュールをインポート
 - `home.nix` - Home Manager エントリポイント。`hm/`からユーザー設定をインポート
 
@@ -164,6 +166,13 @@ nix eval --impure --expr 'let p = (builtins.getFlake (toString ./.)).inputs.nixp
 - 入力中に灰色で履歴ベースのオートサジェスト表示
 - 構文ハイライト（存在するコマンド: 緑、存在しない: 赤）
 - 右矢印キーで候補を確定
+
+### Nix 連携（`hm/shell.nix` / `configuration.nix`）
+
+- `nh` - 日常のリビルド用。GC も `programs.nh.clean`（週次・7 日超かつ直近 5 世代より古いものを削除）が担当し、`nix.gc` は使わない（併用するとアサーションで止まる）。`_update_flake_input` は回帰テストが `nixos-rebuild` の呼び出しを検証しているため `nixos-rebuild` のまま
+- `direnv` + `nix-direnv` - `.envrc` に `use flake` と書き `direnv allow` すると cd で devShell を自動ロード。フックは ble.sh との順序のため initExtra で手動初期化
+- `nix-index`（nix-index-database の DB 同梱）- 未インストールのコマンドを打つと含むパッケージを提示。`, <cmd>` で一時実行（comma）。NixOS 既定の command-not-found は flake 専用環境で動かないので無効化
+- 履歴 - 10 万件保持、重複削除。ble.sh の `history_share` でペイン間をリアルタイム共有
 
 ### エイリアス・キーバインド
 
