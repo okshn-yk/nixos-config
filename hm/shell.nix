@@ -47,10 +47,7 @@
       lg = "lazygit";
       # fd (隠しファイル込み検索)
       fdh = "fd --hidden --no-ignore";
-      # aws profile
-      adev = "export AWS_PROFILE=dev && aws sso login";
-      aadm = "export AWS_PROFILE=admin && aws sso login";
-      aprd = "export AWS_PROFILE=prd && aws sso login";
+      # AWS SSO ログインは関数 asso（initExtra）に集約
       # update-claude / update-codex は関数として initExtra 側で定義
       # （検証→コミットの安全な順序と dirty ガードが必要なため）
     };
@@ -138,6 +135,37 @@
       # Claude Code / Codex の更新ショートカット（中身は上の共通処理）。
       update-claude() { _update_flake_input claude-code-nix "chore: update claude-code"; }
       update-codex() { _update_flake_input codex-cli-nix "chore: update codex"; }
+
+      # AWS SSO ログイン: `asso <profile>`、引数なしなら fzf で選択。
+      # プロファイル一覧は ~/.aws/config（configs/aws-config.nix）から取るので、
+      # プロファイルを増やしてもここは変更不要。AWS_PROFILE を現在のシェルへ
+      # export するためエイリアスやスクリプトではなく関数にしている。
+      # 一覧は設定ファイルを直接読む（`aws configure list-profiles` は 1 秒強かかり、
+      # Tab 補完のたびに待たされるため）。
+      _asso_profiles() {
+        sed -n 's/^\[profile \(.*\)\]$/\1/p' "''${AWS_CONFIG_FILE:-$HOME/.aws/config}"
+      }
+      asso() {
+        local profile=''${1-}
+        local profiles
+        profiles=$(_asso_profiles)
+        if [[ -z $profiles ]]; then
+          echo "asso: AWS のプロファイルが見つかりません" >&2
+          return 1
+        fi
+        if [[ -z $profile ]]; then
+          profile=$(fzf --prompt 'AWS profile> ' --height 10 <<< "$profiles") || return 1
+        elif ! grep -qxF -- "$profile" <<< "$profiles"; then
+          echo "asso: 不明なプロファイル: $profile（候補: ''${profiles//$'\n'/ }）" >&2
+          return 1
+        fi
+        export AWS_PROFILE=$profile
+        aws sso login
+      }
+      _asso_complete() {
+        mapfile -t COMPREPLY < <(compgen -W "$(_asso_profiles 2>/dev/null)" -- "''${COMP_WORDS[COMP_CWORD]}")
+      }
+      complete -F _asso_complete asso
 
       # ghq + fzf連携
       function zrun_ghq_fzf() {

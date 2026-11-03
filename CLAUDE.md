@@ -178,7 +178,7 @@ nix eval --impure --expr 'let p = (builtins.getFlake (toString ./.)).inputs.nixp
 ### エイリアス・キーバインド
 
 - `update-claude` / `update-codex` - 各 flake 入力を更新してリビルド（実体は共通関数 `_update_flake_input`）。失敗時の巻き戻しが他の入力の更新を壊さないよう、リポジトリ内に未コミット・未追跡の変更があると実行を拒否する
-- `adev` / `aadm` - AWS SSO ログインショートカット
+- `asso <profile>` - AWS SSO ログイン（AWS_PROFILE を export して `aws sso login`）。引数なしなら fzf で選択、Tab 補完あり。プロファイルは `~/.aws/config`（`configs/aws-config.nix`）から取得
 - `ls`, `ll`, `la`, `tree` - eza 版（アイコン/git 連携付き）
 - `Ctrl+g` - ghq+fzf でリポジトリ選択・移動
 
