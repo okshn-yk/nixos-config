@@ -39,6 +39,7 @@ in
 
     # Dev Tools
     awscli2
+    ssm-session-manager-plugin # aws ssm start-session（ポートフォワード）に必要
     jq
     ripgrep
     btop

@@ -12,6 +12,11 @@
   sops.secrets."aws/account_id/dev" = { };
   sops.secrets."aws/account_id/prd" = { };
 
+  # ローカルのポートフォワード経由で、本来のホスト名のまま（証明書検証付きで）接続するための名前解決。
+  # networking.hosts はリストのマージなので既存の localhost / ホスト名の定義は残る。
+  # 不要になったらこのエントリも削除する。
+  networking.hosts."127.0.0.1" = [ "gitlab.boneofmyfallacy.net" ];
+
   # File Template
   sops.templates."aws-config" = {
     path = "/home/${username}/.aws/config";
