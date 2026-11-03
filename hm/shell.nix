@@ -9,6 +9,8 @@
   # CLI Tools Package
   home.packages = with pkgs; [
     fd # find の高速代替
+    dust # du の代替。ディレクトリごとの使用量を大きい順にツリーと棒グラフで表示
+    duf # df の代替。マウントごとの空き容量を表で表示
     blesh # ble.sh - Bash Line Editor（オートサジェスト・構文ハイライト）
   ];
 
@@ -42,6 +44,7 @@
       ll = "eza -hl";
       la = "eza -hla";
       tree = "eza --tree";
+      lg = "lazygit";
       # fd (隠しファイル込み検索)
       fdh = "fd --hidden --no-ignore";
       # aws profile
@@ -191,6 +194,20 @@
   # comma: `, cowsay` で未インストールのコマンドをその場で一時実行する。
   programs.nix-index.enable = true;
   programs.nix-index-database.comma.enable = true;
+
+  # tealdeer: `tldr <cmd>` で実例中心の短いヘルプ（man より速く引ける）。
+  # キャッシュは systemd timer で定期更新する（初回は `tldr --update`）。
+  programs.tealdeer = {
+    enable = true;
+    enableAutoUpdates = true;
+  };
+
+  # yazi: TUI ファイラー（プレビュー付き）。`y` で起動し、終了時のディレクトリへ cd する。
+  programs.yazi = {
+    enable = true;
+    enableBashIntegration = true;
+    shellWrapperName = "y";
+  };
 
   programs.eza = {
     enable = true;

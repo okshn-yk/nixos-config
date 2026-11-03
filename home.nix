@@ -20,6 +20,7 @@
     ./hm/autostart.nix
     ./hm/rust.nix
     ./hm/go.nix
+    ./hm/dev-tools.nix
     ./hm/mouse.nix
   ];
 

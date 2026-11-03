@@ -86,6 +86,19 @@
     plugins = with pkgs.tmuxPlugins; [
       sensible
       yank
+      # resurrect: prefix + Ctrl-s で保存、prefix + Ctrl-r で復元（ウィンドウ・ペイン・cwd）
+      {
+        plugin = resurrect;
+        extraConfig = "set -g @resurrect-capture-pane-contents 'on'";
+      }
+      # continuum: 15 分ごとに自動保存し、tmux サーバー起動時に自動復元
+      {
+        plugin = continuum;
+        extraConfig = ''
+          set -g @continuum-restore 'on'
+          set -g @continuum-save-interval '15'
+        '';
+      }
     ];
     extraConfig = ''
       # True Color + SGR拡張マウス対応 (タッチパッドスクロール修正)
@@ -121,7 +134,9 @@
       set -g status-position top
       set -g status-style "bg=#1a1b26,fg=#c0caf5"
       set -g status-left "#[fg=#7aa2f7,bold] #S "
-      set -g status-right "#[fg=#565f89] %Y-%m-%d %H:%M "
+      # continuum の自動保存は status-right に埋め込んだスクリプトの定期実行で動く。
+      # プラグイン読込後にここで status-right を上書きすると消えるため、明示的に入れる。
+      set -g status-right "#(${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/scripts/continuum_save.sh)#[fg=#565f89] %Y-%m-%d %H:%M "
       set -g window-status-format "#[fg=#565f89] #I:#W "
       set -g window-status-current-format "#[fg=#7aa2f7,bold] #I:#W "
     '';
